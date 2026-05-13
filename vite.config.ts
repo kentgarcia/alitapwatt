@@ -6,4 +6,17 @@ export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
+  vite: {
+    environments: {
+      ssr: {
+        build: {
+          rollupOptions: {
+            output: {
+              entryFileNames: "[name].js",
+            },
+          },
+        },
+      },
+    },
+  },
 });
