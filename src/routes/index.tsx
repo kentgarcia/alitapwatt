@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { MobileFrame } from "@/components/MobileFrame";
 import { Logo } from "@/components/Logo";
+import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -28,7 +29,7 @@ function Splash() {
           <Logo size={120} />
           <div className="space-y-2 animate-float-up">
             <h1 className="text-4xl font-bold tracking-tight">
-              <span className="bg-gradient-warm bg-clip-text text-transparent">AlitapWatt</span>
+              <span className="text-foreground">Alitap</span><span className="text-primary">Watt</span>
             </h1>
             <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
               A small light that helps Filipino homes see, understand, and control their energy use.
@@ -37,12 +38,11 @@ function Splash() {
         </div>
 
         <div className="relative w-full space-y-3 animate-float-up" style={{ animationDelay: "0.2s" }}>
-          <Link
-            to="/login"
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-warm px-6 py-4 text-base font-semibold text-primary-foreground shadow-glow active:scale-[0.98] transition"
-          >
-            Get Started <ArrowRight size={18} />
-          </Link>
+          <Button asChild variant="default" size="lg" className="w-full py-4 text-base active:scale-[0.98]">
+            <Link to="/login">
+              Get Started <ArrowRight size={18} />
+            </Link>
+          </Button>
           <p className="text-xs text-muted-foreground">Powered by AI · Made for Pinoy households</p>
         </div>
       </div>

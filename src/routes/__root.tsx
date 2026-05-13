@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import appIcon from "../../assets/app.png";
 
 function NotFoundComponent() {
   return (
@@ -86,6 +87,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "icon", type: "image/png", href: appIcon },
+      { rel: "apple-touch-icon", href: appIcon },
     ],
   }),
   shellComponent: RootShell,

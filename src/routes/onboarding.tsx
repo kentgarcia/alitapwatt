@@ -1,7 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { MobileFrame } from "@/components/MobileFrame";
-import { ScanLine, Sparkles, BellRing, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
 import { useState } from "react";
+import teachImg from "../../assets/teach.png";
+import ideaImg from "../../assets/idea.png";
+import thinkingImg from "../../assets/thinking.png";
 
 export const Route = createFileRoute("/onboarding")({
   component: Onboarding,
@@ -15,22 +19,19 @@ export const Route = createFileRoute("/onboarding")({
 
 const slides = [
   {
-    icon: ScanLine,
+    img: teachImg,
     title: "Scan your Meralco bill",
     desc: "Just snap a photo. AlitapWatt reads your kWh, charges, and due date in seconds.",
-    accent: "from-primary to-primary-glow",
   },
   {
-    icon: Sparkles,
+    img: ideaImg,
     title: "AI-powered Tipid Tips",
     desc: "Get personalized insights on which appliances eat the most kuryente and how to save.",
-    accent: "from-amber-400 to-primary",
   },
   {
-    icon: BellRing,
+    img: thinkingImg,
     title: "Stay ahead of your bill",
     desc: "Smart forecasts and alerts so you never get surprised at the end of the month.",
-    accent: "from-primary to-orange-500",
   },
 ];
 
@@ -39,7 +40,6 @@ function Onboarding() {
   const [step, setStep] = useState(0);
   const isLast = step === slides.length - 1;
   const slide = slides[step];
-  const Icon = slide.icon;
 
   const next = () => {
     if (isLast) navigate({ to: "/home" });
@@ -77,9 +77,8 @@ function Onboarding() {
             key={step}
             className="animate-float-up flex flex-col items-center gap-8"
           >
-            <div className={`relative grid place-items-center h-44 w-44 rounded-[2rem] bg-gradient-to-br ${slide.accent} shadow-glow`}>
-              <div className="absolute inset-0 rounded-[2rem] bg-white/10 backdrop-blur-sm" />
-              <Icon size={72} className="relative text-primary-foreground" strokeWidth={1.5} />
+            <div className="h-56 w-56">
+              <img src={slide.img} alt="" className="h-full w-full object-contain" />
             </div>
 
             <div className="space-y-3 max-w-xs">
@@ -91,12 +90,9 @@ function Onboarding() {
 
         {/* CTA */}
         <div className="relative space-y-3">
-          <button
-            onClick={next}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-warm px-6 py-4 text-base font-semibold text-primary-foreground shadow-glow active:scale-[0.98] transition"
-          >
+          <Button variant="default" size="lg" className="w-full py-4 text-base active:scale-[0.98]" onClick={next}>
             {isLast ? "Get Started" : "Next"} <ArrowRight size={18} />
-          </button>
+          </Button>
           {!isLast && (
             <button
               onClick={() => setStep((s) => Math.max(0, s - 1))}

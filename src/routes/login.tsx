@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { MobileFrame } from "@/components/MobileFrame";
 import { Logo } from "@/components/Logo";
+import { Button } from "@/components/ui/button";
 import { Mail, Phone, ArrowRight } from "lucide-react";
 import { useState } from "react";
 
@@ -56,12 +57,11 @@ function Login() {
             />
           </div>
 
-          <Link
-            to="/onboarding"
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-warm px-6 py-4 font-semibold text-primary-foreground shadow-glow active:scale-[0.98] transition"
-          >
-            Sign In <ArrowRight size={18} />
-          </Link>
+          <Button asChild variant="default" size="lg" className="w-full py-4 text-base active:scale-[0.98]">
+            <Link to="/onboarding">
+              Sign In <ArrowRight size={18} />
+            </Link>
+          </Button>
 
           <div className="flex items-center gap-3 my-2">
             <div className="h-px flex-1 bg-border" />
@@ -69,12 +69,11 @@ function Login() {
             <div className="h-px flex-1 bg-border" />
           </div>
 
-          <Link
-            to="/onboarding"
-            className="flex w-full items-center justify-center rounded-2xl border-2 border-primary/30 bg-card px-6 py-3.5 text-sm font-semibold text-primary active:scale-[0.98] transition"
-          >
-            Continue as Guest
-          </Link>
+          <Button asChild variant="outline" size="lg" className="w-full py-3.5 text-sm active:scale-[0.98]">
+            <Link to="/onboarding">
+              Continue as Guest
+            </Link>
+          </Button>
 
           <p className="text-center text-xs text-muted-foreground pt-2">
             New here? <span className="text-primary font-semibold">Create an account</span>

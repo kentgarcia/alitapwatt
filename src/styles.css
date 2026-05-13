@@ -71,13 +71,34 @@
   --shadow-glow: 0 0 40px oklch(0.705 0.19 45 / 0.35);
   --shadow-soft: 0 10px 30px -12px oklch(0.62 0.2 38 / 0.18);
   --shadow-card: 0 4px 20px -8px oklch(0.5 0.1 40 / 0.12);
+  --shadow-button:
+    0 3px 6px oklch(0% 0 0 / 0.20),
+    0 0 0 1px var(--primary),
+    inset 0 0 6px 2px oklch(100% 0 0 / 0.24),
+    inset 0 0 0 1px oklch(100% 0 0 / 0.40);
+  --shadow-button-destructive:
+    0 3px 6px oklch(0% 0 0 / 0.20),
+    0 0 0 1px var(--destructive),
+    inset 0 0 6px 2px oklch(100% 0 0 / 0.24),
+    inset 0 0 0 1px oklch(100% 0 0 / 0.40);
+  --shadow-button-secondary:
+    0 3px 6px oklch(0% 0 0 / 0.12),
+    0 0 0 1px oklch(0% 0 0 / 0.08),
+    inset 0 0 4px 1px oklch(0% 0 0 / 0.04),
+    inset 0 0 0 1px oklch(100% 0 0 / 0.60);
+  --shadow-button-outline:
+    0 2px 4px oklch(0% 0 0 / 0.08),
+    0 0 0 1px var(--primary),
+    inset 0 0 0 1px oklch(100% 0 0 / 0.80);
   --gradient-warm: linear-gradient(135deg, oklch(0.705 0.19 45), oklch(0.78 0.16 60));
   --gradient-glow: radial-gradient(circle at 50% 0%, oklch(0.82 0.13 60 / 0.5), transparent 70%);
 }
 
 @layer base {
   * { border-color: var(--color-border); }
-  html, body { height: 100%; }
+  html, body { height: 100%; overflow: auto; }
+  html { scrollbar-width: none; -ms-overflow-style: none; }
+  html::-webkit-scrollbar { display: none; }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -90,6 +111,12 @@
   .shadow-glow { box-shadow: var(--shadow-glow); }
   .shadow-soft { box-shadow: var(--shadow-soft); }
   .shadow-card { box-shadow: var(--shadow-card); }
+  .shadow-button { box-shadow: var(--shadow-button); }
+  .shadow-button-destructive { box-shadow: var(--shadow-button-destructive); }
+  .shadow-button-secondary { box-shadow: var(--shadow-button-secondary); }
+  .shadow-button-outline { box-shadow: var(--shadow-button-outline); }
+  .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
   .bg-gradient-warm { background-image: var(--gradient-warm); }
   .bg-gradient-glow { background-image: var(--gradient-glow); }
 

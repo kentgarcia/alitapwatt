@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { AlertTriangle, TrendingUp, Bell, Zap, Calendar } from "lucide-react";
+import thinkingImg from "../../assets/thinking.png";
+import sadImg from "../../assets/sad.png";
 
 export const Route = createFileRoute("/forecast")({ component: Forecast });
 
@@ -23,11 +25,16 @@ function Forecast() {
         {/* Forecast card */}
         <div className="rounded-3xl bg-gradient-warm p-6 text-primary-foreground shadow-glow relative overflow-hidden">
           <div className="absolute -bottom-12 -right-12 h-40 w-40 rounded-full bg-white/15 blur-2xl" />
-          <div className="flex items-center gap-2 text-xs opacity-90">
-            <Calendar size={14} /> Forecast for November
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-2 text-xs opacity-90">
+                <Calendar size={14} /> Forecast for November
+              </div>
+              <p className="mt-2 text-4xl font-bold">₱3,180</p>
+              <p className="text-xs opacity-90 mt-1">Based on current usage trend</p>
+            </div>
+            <img src={thinkingImg} alt="" className="h-14 w-14 object-contain opacity-90" />
           </div>
-          <p className="mt-2 text-4xl font-bold">₱3,180</p>
-          <p className="text-xs opacity-90 mt-1">Based on current usage trend</p>
         </div>
 
         {/* Budget progress */}
@@ -47,7 +54,7 @@ function Forecast() {
 
         {/* Warning banner */}
         <div className="flex items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
-          <AlertTriangle size={18} className="text-destructive mt-0.5 shrink-0" />
+          <img src={sadImg} alt="" className="h-6 w-6 object-contain mt-0.5 shrink-0" />
           <div className="text-xs">
             <p className="font-semibold text-foreground">Warning: Bill may exceed ₱3,000</p>
             <p className="text-muted-foreground mt-0.5">Reduce aircon use to stay under budget this month.</p>

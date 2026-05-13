@@ -1,4 +1,4 @@
-import { Zap } from "lucide-react";
+import appIcon from "../../assets/app.png";
 
 export function Logo({ size = 88, glow = true }: { size?: number; glow?: boolean }) {
   return (
@@ -9,9 +9,7 @@ export function Logo({ size = 88, glow = true }: { size?: number; glow?: boolean
           aria-hidden
         />
       )}
-      <span className="relative flex h-full w-full items-center justify-center rounded-3xl bg-gradient-warm shadow-glow">
-        <Zap size={size * 0.5} className="text-primary-foreground" fill="currentColor" />
-      </span>
+      <img src={appIcon} alt="AlitapWatt" className="relative h-full w-full object-contain rounded-2xl" />
     </div>
   );
 }

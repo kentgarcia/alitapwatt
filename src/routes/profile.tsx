@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
+import { Button } from "@/components/ui/button";
 import { ChevronRight, Users, Globe, Bell, LogOut, Target, Snowflake, Tv, Refrigerator, WashingMachine, Microwave, Lightbulb, BarChart3 } from "lucide-react";
 import { useState } from "react";
 
@@ -79,12 +80,11 @@ function Profile() {
           </Link>
         </Section>
 
-        <Link
-          to="/"
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/30 bg-card py-3.5 text-sm font-semibold text-destructive active:scale-[0.99] transition"
-        >
-          <LogOut size={16} /> Sign Out
-        </Link>
+        <Button asChild variant="ghost" size="lg" className="w-full py-3.5 text-sm active:scale-[0.99]">
+          <Link to="/">
+            <LogOut size={16} /> Sign Out
+          </Link>
+        </Button>
 
         <p className="text-center text-[10px] text-muted-foreground">AlitapWatt v1.0 · A small light for your home</p>
       </div>
