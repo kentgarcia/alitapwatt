@@ -8,7 +8,6 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 
-import "../styles.css";
 import appIcon from "../../assets/app.png";
 import { EnergyDataProvider } from "@/lib/storage/context";
 
@@ -74,39 +73,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { title: "AlitapWatt — A small light for your home's energy" },
+      { name: "description", content: "AI-powered energy assistant helping Filipino households see, understand, and reduce electricity use." },
     ],
     links: [
       { rel: "icon", type: "image/png", href: appIcon },
       { rel: "apple-touch-icon", href: appIcon },
     ],
   }),
-  shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
 });
-
-function RootShell({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  );
-}
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
