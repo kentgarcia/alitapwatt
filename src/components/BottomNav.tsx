@@ -1,11 +1,11 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, ScanLine, Lightbulb, Bell, User } from "lucide-react";
+import { Home, ScanLine, Lightbulb, History, User } from "lucide-react";
 
 const items = [
   { to: "/home", label: "Home", icon: Home },
   { to: "/scan", label: "Scan", icon: ScanLine },
-  { to: "/insights", label: "Tips", icon: Lightbulb },
-  { to: "/forecast", label: "Alerts", icon: Bell },
+  { to: "/insights", label: "AI Hub", icon: Lightbulb },
+  { to: "/forecast", label: "History", icon: History },
   { to: "/profile", label: "Profile", icon: User },
 ] as const;
 

@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
-import { Camera, Upload, Sparkles, FileText, Check, Loader2, Lightbulb, Zap, DollarSign, Radio, Receipt, HelpCircle } from "lucide-react";
+import { Camera, Upload, Sparkles, FileText, Check, Loader2, Lightbulb, Zap, DollarSign, Radio, Receipt, HelpCircle, X } from "lucide-react";
 import { useState, useEffect } from "react";
+import bill1 from "../../assets/bills/1.png";
+import bill2 from "../../assets/bills/2.png";
+import bill3 from "../../assets/bills/3.png";
 
 export const Route = createFileRoute("/scan")({ component: Scan });
 
@@ -24,6 +27,15 @@ const steps = [
 function Scan() {
   const [stage, setStage] = useState<"upload" | "scanning" | "result">("upload");
   const [step, setStep] = useState(0);
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [selectedBill, setSelectedBill] = useState<string | null>(null);
+  const [captured, setCaptured] = useState(false);
+  const sampleBills = [
+    { src: bill1, label: "Bill #1" },
+    { src: bill2, label: "Bill #2" },
+    { src: bill3, label: "Bill #3" },
+  ];
 
   useEffect(() => {
     if (stage !== "scanning") return;
@@ -33,7 +45,13 @@ function Scan() {
   }, [stage, step]);
 
   const startScan = () => { setStage("scanning"); setStep(0); };
-  const reset = () => setStage("upload");
+  const reset = () => { setStage("upload"); setCaptured(false); setSelectedBill(null); };
+  const pickCameraBill = () => {
+    const randomBill = sampleBills[Math.floor(Math.random() * sampleBills.length)];
+    setSelectedBill(randomBill.label);
+    setCaptured(true);
+    setTimeout(() => { setCameraOpen(false); startScan(); }, 600);
+  };
 
   return (
     <AppShell>
@@ -64,10 +82,10 @@ function Scan() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <Button variant="default" size="lg" className="py-4 text-sm" onClick={startScan}>
+              <Button variant="default" size="lg" className="py-4 text-sm" onClick={() => setCameraOpen(true)}>
                 <Camera size={16} /> Take Photo
               </Button>
-              <Button variant="outline" size="lg" className="py-4 text-sm" onClick={startScan}>
+              <Button variant="outline" size="lg" className="py-4 text-sm" onClick={() => setGalleryOpen(true)}>
                 <Upload size={16} /> Upload from Gallery
               </Button>
             </div>
@@ -83,11 +101,83 @@ function Scan() {
           </div>
         )}
 
+        {/* ===== GALLERY PICKER ===== */}
+        {galleryOpen && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-end sm:items-center justify-center animate-float-up" onClick={() => setGalleryOpen(false)}>
+            <div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-card p-5 shadow-2xl" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm font-semibold">Select a sample bill</p>
+                <button onClick={() => setGalleryOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-full bg-muted">
+                  <X size={14} />
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {sampleBills.map((b, i) => (
+                  <button key={i} onClick={() => { setSelectedBill(b.label); setGalleryOpen(false); startScan(); }}
+                    className={`rounded-xl overflow-hidden border-2 transition ${
+                      selectedBill === b.label ? "border-primary" : "border-border"
+                    } active:scale-[0.97]`}
+                  >
+                    <img src={b.src} alt={b.label} className="h-28 w-full object-cover" />
+                    <p className="text-[9px] font-medium text-center py-1.5 bg-muted">{b.label}</p>
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground text-center mt-3">Tap a bill to start scanning</p>
+            </div>
+          </div>
+        )}
+
+        {/* ===== CAMERA VIEWFINDER ===== */}
+        {cameraOpen && (
+          <div className="fixed inset-0 z-50 bg-black animate-float-up" onClick={() => setCameraOpen(false)}>
+            <div className="relative h-full flex flex-col" onClick={e => e.stopPropagation()}>
+              {/* top bar */}
+              <div className="flex items-center justify-between px-5 pt-12 pb-4">
+                <button onClick={() => setCameraOpen(false)} className="text-white/70 text-sm">Cancel</button>
+                <div className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
+                  <span className="text-white/50 text-xs">Live</span>
+                </div>
+              </div>
+
+              {/* viewfinder */}
+              <div className="flex-1 flex items-center justify-center px-6">
+                <div className="relative w-full max-w-sm rounded-3xl overflow-hidden border-2 border-white/20 shadow-2xl">
+                  <img src={sampleBills[0].src} alt="" className={`w-full h-72 object-cover transition-all ${captured ? "scale-105 brightness-90" : ""}`} />
+                  {/* corner guides */}
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute top-3 left-3 h-6 w-6 border-t-2 border-l-2 border-white/60 rounded-tl" />
+                    <div className="absolute top-3 right-3 h-6 w-6 border-t-2 border-r-2 border-white/60 rounded-tr" />
+                    <div className="absolute bottom-3 left-3 h-6 w-6 border-b-2 border-l-2 border-white/60 rounded-bl" />
+                    <div className="absolute bottom-3 right-3 h-6 w-6 border-b-2 border-r-2 border-white/60 rounded-br" />
+                  </div>
+                  {/* scanning hint */}
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-sm rounded-full px-4 py-1.5">
+                    <p className="text-white/80 text-[10px] font-medium">Position bill within frame</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* capture button */}
+              <div className="flex items-center justify-center pb-12 pt-4">
+                <button onClick={pickCameraBill}
+                  className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm border-4 border-white/40 active:scale-90 transition">
+                  <span className="h-12 w-12 rounded-full bg-white" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ===== SCANNING STAGE ===== */}
         {stage === "scanning" && (
           <div className="rounded-3xl bg-card p-6 shadow-card animate-float-up">
-            <div className="relative mx-auto h-40 w-32 rounded-xl bg-muted overflow-hidden mb-6">
-              <FileText size={32} className="absolute inset-0 m-auto text-muted-foreground/30" />
+            <div className="relative mx-auto h-40 w-32 rounded-xl bg-muted overflow-hidden mb-4">
+              {selectedBill && (
+                <img src={sampleBills.find(b => b.label === selectedBill)?.src} alt="" className="h-full w-full object-cover opacity-40" />
+              )}
+              {!selectedBill && <FileText size={32} className="absolute inset-0 m-auto text-muted-foreground/30" />}
               <div className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent shadow-glow animate-scan top-1/2" />
             </div>
             <div className="space-y-4">

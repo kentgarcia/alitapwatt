@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SmartHomeRouteImport } from './routes/smart-home'
 import { Route as ScanRouteImport } from './routes/scan'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
@@ -16,9 +17,15 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as ForecastRouteImport } from './routes/forecast'
+import { Route as AppliancesRouteImport } from './routes/appliances'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 
+const SmartHomeRoute = SmartHomeRouteImport.update({
+  id: '/smart-home',
+  path: '/smart-home',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ScanRoute = ScanRouteImport.update({
   id: '/scan',
   path: '/scan',
@@ -54,6 +61,11 @@ const ForecastRoute = ForecastRouteImport.update({
   path: '/forecast',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppliancesRoute = AppliancesRouteImport.update({
+  id: '/appliances',
+  path: '/appliances',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -68,6 +80,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/appliances': typeof AppliancesRoute
   '/forecast': typeof ForecastRoute
   '/home': typeof HomeRoute
   '/insights': typeof InsightsRoute
@@ -75,10 +88,12 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
   '/scan': typeof ScanRoute
+  '/smart-home': typeof SmartHomeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/appliances': typeof AppliancesRoute
   '/forecast': typeof ForecastRoute
   '/home': typeof HomeRoute
   '/insights': typeof InsightsRoute
@@ -86,11 +101,13 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
   '/scan': typeof ScanRoute
+  '/smart-home': typeof SmartHomeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/appliances': typeof AppliancesRoute
   '/forecast': typeof ForecastRoute
   '/home': typeof HomeRoute
   '/insights': typeof InsightsRoute
@@ -98,12 +115,14 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
   '/scan': typeof ScanRoute
+  '/smart-home': typeof SmartHomeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/admin'
+    | '/appliances'
     | '/forecast'
     | '/home'
     | '/insights'
@@ -111,10 +130,12 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/profile'
     | '/scan'
+    | '/smart-home'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
+    | '/appliances'
     | '/forecast'
     | '/home'
     | '/insights'
@@ -122,10 +143,12 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/profile'
     | '/scan'
+    | '/smart-home'
   id:
     | '__root__'
     | '/'
     | '/admin'
+    | '/appliances'
     | '/forecast'
     | '/home'
     | '/insights'
@@ -133,11 +156,13 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/profile'
     | '/scan'
+    | '/smart-home'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AppliancesRoute: typeof AppliancesRoute
   ForecastRoute: typeof ForecastRoute
   HomeRoute: typeof HomeRoute
   InsightsRoute: typeof InsightsRoute
@@ -145,10 +170,18 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   ProfileRoute: typeof ProfileRoute
   ScanRoute: typeof ScanRoute
+  SmartHomeRoute: typeof SmartHomeRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/smart-home': {
+      id: '/smart-home'
+      path: '/smart-home'
+      fullPath: '/smart-home'
+      preLoaderRoute: typeof SmartHomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/scan': {
       id: '/scan'
       path: '/scan'
@@ -198,6 +231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForecastRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/appliances': {
+      id: '/appliances'
+      path: '/appliances'
+      fullPath: '/appliances'
+      preLoaderRoute: typeof AppliancesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -218,6 +258,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AppliancesRoute: AppliancesRoute,
   ForecastRoute: ForecastRoute,
   HomeRoute: HomeRoute,
   InsightsRoute: InsightsRoute,
@@ -225,6 +266,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   ProfileRoute: ProfileRoute,
   ScanRoute: ScanRoute,
+  SmartHomeRoute: SmartHomeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

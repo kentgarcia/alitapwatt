@@ -8,6 +8,7 @@ import {
   AlertTriangle, Users, Sparkles, Clock, Gauge
 } from "lucide-react";
 import happyImg from "../../assets/happy.png";
+import { useState } from "react";
 
 export const Route = createFileRoute("/home")({ component: Home });
 
@@ -63,6 +64,14 @@ function DailyChart({ data, color }: { data: number[]; color: string }) {
 }
 
 function Home() {
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifications = [
+    { type: "warn", icon: AlertTriangle, title: "Near budget limit", desc: "You've used 85% of your ₱3,000 monthly budget.", time: "2h ago" },
+    { type: "info", icon: Zap, title: "Usage spike detected", desc: "Today's consumption is 23% higher than usual.", time: "5h ago" },
+    { type: "good", icon: TrendingUp, title: "Savings milestone", desc: "You saved ₱335 this month — 15% less than last month!", time: "1d ago" },
+    { type: "info", icon: Lightbulb, title: "New AI tip available", desc: "Try setting AC to 24°C to save ₱300/month.", time: "2d ago" },
+  ];
+
   return (
     <AppShell>
       <div className="px-4 pt-6 pb-6 space-y-4">
@@ -82,10 +91,42 @@ function Home() {
               <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
               Active
             </span>
-            <button className="relative h-9 w-9 rounded-full bg-card shadow-card flex items-center justify-center">
-              <Bell size={16} className="text-foreground" />
-              <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-destructive" />
-            </button>
+            <div className="relative">
+              <button onClick={() => setNotifOpen(!notifOpen)} className="relative h-9 w-9 rounded-full bg-card shadow-card flex items-center justify-center">
+                <Bell size={16} className="text-foreground" />
+                <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-destructive" />
+              </button>
+              {notifOpen && (
+                <div className="absolute right-0 top-12 w-72 rounded-2xl bg-card shadow-2xl border border-primary/10 overflow-hidden z-50 animate-float-up">
+                  <div className="bg-gradient-to-r from-primary to-primary-dark p-3">
+                    <p className="text-xs font-semibold text-white">Notifications</p>
+                  </div>
+                  <div className="max-h-72 overflow-y-auto">
+                    {notifications.map((n, i) => {
+                      const Icon = n.icon;
+                      const dotColor = n.type === "warn" ? "bg-warning" : n.type === "good" ? "bg-success" : "bg-primary";
+                      return (
+                        <div key={i} className="flex items-start gap-3 p-3 border-b border-border last:border-0">
+                          <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${n.type === "warn" ? "bg-warning/10 text-warning" : n.type === "good" ? "bg-success/10 text-success" : "bg-primary/10 text-primary"}`}>
+                            <Icon size={13} />
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs font-semibold">{n.title}</p>
+                              <span className="text-[9px] text-muted-foreground shrink-0">{n.time}</span>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">{n.desc}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <Link to="/forecast" className="block text-center text-[10px] font-semibold text-primary p-3 border-t border-border hover:bg-muted transition" onClick={() => setNotifOpen(false)}>
+                    View all notifications →
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
@@ -123,19 +164,37 @@ function Home() {
         </div>
 
         {/* ===== AI INSIGHT CARD ===== */}
-        <div className="rounded-2xl bg-gradient-to-r from-primary to-primary-dark p-4 shadow-glow flex items-start gap-3">
-          <img src={happyImg} alt="" className="h-12 w-12 object-contain drop-shadow-lg shrink-0 mt-1" />
+        <div className="rounded-2xl bg-card border border-primary/10 p-4 shadow-card flex items-start gap-3">
+          <img src={happyImg} alt="" className="h-12 w-12 object-contain shrink-0 mt-1" />
           <div className="space-y-2 flex-1">
-            <p className="text-[10px] text-white/50 font-semibold uppercase tracking-wider">AlitapWatt AI Insight</p>
-            <div className="bg-white/15 backdrop-blur-sm rounded-xl px-3.5 py-2.5 space-y-1.5">
-              <p className="text-xs text-white leading-relaxed">
-                Your electricity usage increased by <span className="font-bold text-white text-sm">18%</span> this week due to extended appliance usage during evening hours.
+            <p className="text-[10px] text-primary/60 font-semibold uppercase tracking-wider">AlitapWatt AI Insight</p>
+            <div className="bg-primary/5 rounded-xl px-3.5 py-2.5 space-y-1.5">
+              <p className="text-xs text-foreground leading-relaxed">
+                Your electricity usage increased by <span className="font-bold text-primary text-sm">18%</span> this week due to extended appliance usage during evening hours.
               </p>
-              <p className="text-[11px] text-white/70 leading-relaxed">
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
                 Your refrigerator and air conditioner are consuming the most power.
               </p>
             </div>
           </div>
+        </div>
+
+        {/* ===== QUICK ACCESS CARDS ===== */}
+        <div className="grid grid-cols-2 gap-3">
+          <Link to="/appliances" className="rounded-2xl bg-card p-4 shadow-card border border-primary/5 active:scale-[0.98] transition">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-warm text-primary-foreground shadow-glow">
+              <Zap size={18} />
+            </span>
+            <p className="text-sm font-bold mt-3">Appliance Tracker</p>
+            <p className="text-[9px] text-muted-foreground mt-0.5">Track & calculate appliance costs</p>
+          </Link>
+          <Link to="/forecast" className="rounded-2xl bg-card p-4 shadow-card border border-primary/5 active:scale-[0.98] transition">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-warm text-primary-foreground shadow-glow">
+              <Calendar size={18} />
+            </span>
+            <p className="text-sm font-bold mt-3">Forecast Usage</p>
+            <p className="text-[9px] text-muted-foreground mt-0.5">Predict & simulate your energy bill</p>
+          </Link>
         </div>
 
         {/* ===== SMART ENERGY SCORE ===== */}
@@ -245,14 +304,14 @@ function Home() {
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary"><Lightbulb size={16} /></span>
               <span className="text-[9px] font-medium text-center leading-tight">View Insights</span>
             </Link>
-            <div className="flex flex-col items-center gap-1.5 rounded-xl bg-card p-3 shadow-card active:scale-[0.97] transition">
+            <Link to="/appliances" className="flex flex-col items-center gap-1.5 rounded-xl bg-card p-3 shadow-card active:scale-[0.97] transition">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary"><Monitor size={16} /></span>
               <span className="text-[9px] font-medium text-center leading-tight">Appliance Tracker</span>
-            </div>
-            <div className="flex flex-col items-center gap-1.5 rounded-xl bg-card p-3 shadow-card active:scale-[0.97] transition">
+            </Link>
+            <Link to="/appliances" className="flex flex-col items-center gap-1.5 rounded-xl bg-card p-3 shadow-card active:scale-[0.97] transition">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary"><Calculator size={16} /></span>
               <span className="text-[9px] font-medium text-center leading-tight">Energy Calculator</span>
-            </div>
+            </Link>
             <Link to="/forecast" className="flex flex-col items-center gap-1.5 rounded-xl bg-card p-3 shadow-card active:scale-[0.97] transition">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary"><Calendar size={16} /></span>
               <span className="text-[9px] font-medium text-center leading-tight">Forecast Bill</span>
