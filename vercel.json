@@ -3,6 +3,5 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "outputDirectory": "dist/client",
-  "devCommand": "npm run dev",
-  "nodeVersion": "20"
+  "devCommand": "npm run dev"
 }
