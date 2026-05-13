@@ -8,8 +8,9 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 
-import appCss from "../styles.css?url";
+import "../styles.css";
 import appIcon from "../../assets/app.png";
+import { EnergyDataProvider } from "@/lib/storage/context";
 
 function NotFoundComponent() {
   return (
@@ -83,10 +84,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
       { rel: "icon", type: "image/png", href: appIcon },
       { rel: "apple-touch-icon", href: appIcon },
     ],
@@ -116,7 +113,9 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <EnergyDataProvider>
+        <Outlet />
+      </EnergyDataProvider>
     </QueryClientProvider>
   );
 }

@@ -5,17 +5,25 @@ import {
   Bell, TrendingUp, ArrowRight, Zap, Wallet, PiggyBank,
   CloudSun, Upload, Lightbulb, Monitor, Calculator, Calendar,
   Thermometer, Refrigerator, WashingMachine, Fan, ChefHat,
-  AlertTriangle, Users, Sparkles, Clock, Gauge
+  AlertTriangle, Users, Sparkles, Clock
 } from "lucide-react";
 import happyImg from "../../assets/happy.png";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useEnergyData } from "@/lib/storage/context";
 
-export const Route = createFileRoute("/home")({ component: Home });
+export const Route = createFileRoute("/home")({
+  component: Home,
+  beforeLoad: () => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem("alitapwatt_data");
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (!data.onboardingComplete) window.location.href = "/onboarding";
+    } catch {}
+  },
+});
 
-const dailyData = [28, 35, 22, 40, 32, 48, 55];
-const weeklyData = [42, 55, 48, 62, 58, 75, 70];
-const prevWeek = [50, 60, 55, 68, 65, 80, 78];
-const peakHours = [18, 22, 35, 48, 62, 75, 68, 55, 40, 30, 20, 15];
 const peakLabels = ["6AM","8AM","10AM","12PM","2PM","4PM","6PM","8PM","10PM","12AM","2AM","4AM"];
 
 const appliances = [
@@ -64,13 +72,16 @@ function DailyChart({ data, color }: { data: number[]; color: string }) {
 }
 
 function Home() {
+  const { data } = useEnergyData();
+  const [greeting, setGreeting] = useState("");
   const [notifOpen, setNotifOpen] = useState(false);
-  const notifications = [
-    { type: "warn", icon: AlertTriangle, title: "Near budget limit", desc: "You've used 85% of your ₱3,000 monthly budget.", time: "2h ago" },
-    { type: "info", icon: Zap, title: "Usage spike detected", desc: "Today's consumption is 23% higher than usual.", time: "5h ago" },
-    { type: "good", icon: TrendingUp, title: "Savings milestone", desc: "You saved ₱335 this month — 15% less than last month!", time: "1d ago" },
-    { type: "info", icon: Lightbulb, title: "New AI tip available", desc: "Try setting AC to 24°C to save ₱300/month.", time: "2d ago" },
-  ];
+  const e = data.energy;
+  const notifications = e.notifications;
+
+  useEffect(() => {
+    const h = new Date().getHours();
+    setGreeting(h < 12 ? "Good Morning" : h < 18 ? "Good Afternoon" : "Good Evening");
+  }, []);
 
   return (
     <AppShell>
@@ -78,8 +89,8 @@ function Home() {
         {/* ===== HEADER ===== */}
         <header className="flex items-center justify-between">
           <div>
-            <p className="text-xs text-muted-foreground">Good Evening,</p>
-            <h1 className="text-xl font-bold">Kent 👋</h1>
+            <p className="text-xs text-muted-foreground">{greeting},</p>
+            <h1 className="text-xl font-bold">{e.userName} 👋</h1>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -103,7 +114,7 @@ function Home() {
                   </div>
                   <div className="max-h-72 overflow-y-auto">
                     {notifications.map((n, i) => {
-                      const Icon = n.icon;
+                      const Icon = n.type === "warn" ? AlertTriangle : n.type === "good" ? TrendingUp : Zap;
                       const dotColor = n.type === "warn" ? "bg-warning" : n.type === "good" ? "bg-success" : "bg-primary";
                       return (
                         <div key={i} className="flex items-start gap-3 p-3 border-b border-border last:border-0">
@@ -134,15 +145,15 @@ function Home() {
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-gradient-to-br from-primary to-primary-dark p-4 text-primary-foreground shadow-glow">
             <p className="text-[10px] opacity-80 font-medium uppercase tracking-wide">Est. Bill</p>
-            <p className="text-2xl font-bold mt-1">₱2,485</p>
-            <p className="text-[10px] opacity-70 mt-0.5">vs ₱2,820 last month</p>
+            <p className="text-2xl font-bold mt-1">₱{e.estimatedBill.toLocaleString()}</p>
+            <p className="text-[10px] opacity-70 mt-0.5">vs ₱{e.lastMonthBill.toLocaleString()} last month</p>
           </div>
           <div className="rounded-2xl bg-card p-4 shadow-card">
             <div className="flex items-center gap-2 text-muted-foreground mb-2">
               <Zap size={14} className="text-primary" />
               <span className="text-[10px] font-medium uppercase tracking-wide">Consumption</span>
             </div>
-            <p className="text-2xl font-bold">186</p>
+            <p className="text-2xl font-bold">{e.currentUsage}</p>
             <p className="text-[10px] text-muted-foreground mt-0.5">kWh this month</p>
           </div>
           <div className="rounded-2xl bg-card p-4 shadow-card">
@@ -150,16 +161,16 @@ function Home() {
               <Wallet size={14} className="text-primary" />
               <span className="text-[10px] font-medium uppercase tracking-wide">Budget Left</span>
             </div>
-            <p className="text-2xl font-bold text-success">₱515</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">of ₱3,000 budget</p>
+            <p className="text-2xl font-bold text-success">₱{e.budgetLeft.toLocaleString()}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">of ₱{e.budgetTotal.toLocaleString()} budget</p>
           </div>
           <div className="rounded-2xl bg-card p-4 shadow-card">
             <div className="flex items-center gap-2 text-muted-foreground mb-2">
               <PiggyBank size={14} className="text-primary" />
               <span className="text-[10px] font-medium uppercase tracking-wide">Savings</span>
             </div>
-            <p className="text-2xl font-bold text-success">₱335</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">15% less than last month</p>
+            <p className="text-2xl font-bold text-success">₱{e.savings.toLocaleString()}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">{e.savingsPct}% less than last month</p>
           </div>
         </div>
 
@@ -202,7 +213,7 @@ function Home() {
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-4">Smart Energy Score</h3>
           <div className="flex items-start gap-6">
             <div className="shrink-0">
-              <CircularScore score={72} size={110} stroke={9} />
+              <CircularScore score={e.energyScore} size={110} stroke={9} />
             </div>
             <div className="flex-1 min-w-0 space-y-3">
               <div>
@@ -213,28 +224,28 @@ function Home() {
                 <div>
                   <div className="flex justify-between text-[10px] mb-0.5">
                     <span className="text-foreground">Usage Efficiency</span>
-                    <span className="font-semibold text-primary">78%</span>
+                    <span className="font-semibold text-primary">{e.scoreEfficiency}%</span>
                   </div>
                   <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full rounded-full bg-primary" style={{ width: "78%" }} />
+                    <div className="h-full rounded-full bg-primary" style={{ width: `${e.scoreEfficiency}%` }} />
                   </div>
                 </div>
                 <div>
                   <div className="flex justify-between text-[10px] mb-0.5">
                     <span className="text-foreground">Budget Adherence</span>
-                    <span className="font-semibold text-success">82%</span>
+                    <span className="font-semibold text-success">{e.scoreBudget}%</span>
                   </div>
                   <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full rounded-full bg-success" style={{ width: "82%" }} />
+                    <div className="h-full rounded-full bg-success" style={{ width: `${e.scoreBudget}%` }} />
                   </div>
                 </div>
                 <div>
                   <div className="flex justify-between text-[10px] mb-0.5">
                     <span className="text-foreground">Peak Hour Avoidance</span>
-                    <span className="font-semibold text-warning">55%</span>
+                    <span className="font-semibold text-warning">{e.scorePeak}%</span>
                   </div>
                   <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full rounded-full bg-warning" style={{ width: "55%" }} />
+                    <div className="h-full rounded-full bg-warning" style={{ width: `${e.scorePeak}%` }} />
                   </div>
                 </div>
               </div>
@@ -252,7 +263,7 @@ function Home() {
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-muted-foreground/30" /> Yesterday</span>
             </div>
           </div>
-          <DailyChart data={dailyData} color="#F97316" />
+          <DailyChart data={e.dailyData} color="#F97316" />
           <div className="flex justify-between text-[9px] text-muted-foreground mt-1">
             {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d => <span key={d}>{d}</span>)}
           </div>
@@ -262,7 +273,7 @@ function Home() {
           <div className="rounded-2xl bg-card p-4 shadow-card">
             <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-3">Weekly Trend</h3>
             <div className="flex items-end gap-1 h-20">
-              {weeklyData.map((v, i) => (
+              {e.weeklyData.map((v, i) => (
                 <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
                   <div className="w-full rounded-t bg-primary transition-all" style={{ height: `${v}%`, opacity: 0.6 + (v / 100) * 0.4 }} />
                   <span className="text-[8px] text-muted-foreground">{["M","T","W","T","F","S","S"][i]}</span>
@@ -273,7 +284,7 @@ function Home() {
           <div className="rounded-2xl bg-card p-4 shadow-card">
             <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-3">Peak Hours</h3>
             <div className="flex items-end gap-0.5 h-20">
-              {peakHours.map((v, i) => (
+              {e.peakHours.map((v, i) => (
                 <div key={i} className="flex-1 flex flex-col items-center">
                   <div className="w-full rounded-t" style={{ height: `${v}%`, backgroundColor: v > 60 ? "#ef4444" : v > 40 ? "#eab308" : "#F97316", opacity: 0.5 + (v / 100) * 0.5 }} />
                   {i % 3 === 0 && <span className="text-[6px] text-muted-foreground mt-0.5">{peakLabels[i]}</span>}

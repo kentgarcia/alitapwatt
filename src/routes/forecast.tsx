@@ -11,37 +11,13 @@ import {
 import happyImg from "../../assets/happy.png";
 import ideaImg from "../../assets/idea.png";
 import teachImg from "../../assets/teach.png";
+import { useEnergyData } from "@/lib/storage/context";
 
 export const Route = createFileRoute("/forecast")({ component: EnergyHistory });
 
-const months = [
-  { name: "January 2026", bill: 2540, kwh: 198, change: -12, insight: "You reduced nighttime appliance usage, resulting in lower costs." },
-  { name: "December 2025", bill: 2890, kwh: 215, change: 8, insight: "Holiday celebrations increased overall consumption." },
-  { name: "November 2025", bill: 2680, kwh: 204, change: -5, insight: "AC usage dropped as weather cooled down." },
-  { name: "October 2025", bill: 2820, kwh: 210, change: 3, insight: "Slight increase due to hotter-than-usual days." },
-  { name: "September 2025", bill: 2740, kwh: 208, change: -8, insight: "AI recommendations helped reduce peak hour usage." },
-  { name: "August 2025", bill: 2980, kwh: 225, change: 15, insight: "Extended AC usage during summer heatwave." },
-];
-
-const timeline = [
-  { icon: Thermometer, text: "High AC usage detected during summer months.", date: "Aug 2025", type: "warn" },
-  { icon: Lightbulb, text: "AI recommendations applied — peak usage reduced by 12%.", date: "Sep 2025", type: "good" },
-  { icon: Zap, text: "New washing machine added — slight increase in April.", date: "Apr 2025", type: "info" },
-  { icon: TrendingUp, text: "Home became 18% more efficient this quarter.", date: "Mar 2025", type: "good" },
-  { icon: AlertTriangle, text: "Budget exceeded by 6% in February.", date: "Feb 2025", type: "warn" },
-  { icon: CheckCircle2, text: "First ₱5,000 savings milestone reached!", date: "Jan 2025", type: "good" },
-];
-
-const achievements = [
-  { icon: Trophy, label: "₱5,000 Saved", desc: "Total savings milestone achieved" },
-  { icon: Star, label: "3-Month Streak", desc: "Consistently under budget" },
-  { icon: Leaf, label: "Eco Household", desc: "Reduced carbon footprint by 15%" },
-  { icon: Award, label: "Tipid Master", desc: "Top 10% of savers in Laguna" },
-];
-
-const monthlyData = [2540, 2890, 2680, 2820, 2740, 2980, 3100, 2850, 2600, 2450, 2350, 2540];
-
 function EnergyHistory() {
+  const { data } = useEnergyData();
+  const e = data.energy;
   return (
     <AppShell>
       <div className="px-4 pt-6 pb-6 space-y-5">
@@ -65,22 +41,22 @@ function EnergyHistory() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[10px] text-white/60">Predicted Next Bill</p>
-              <p className="text-3xl font-bold text-white mt-1">₱3,180</p>
-              <p className="text-[10px] text-white/70 mt-1">Based on current 214 kWh/month trend</p>
+              <p className="text-3xl font-bold text-white mt-1">₱{e.predictedBill.toLocaleString()}</p>
+              <p className="text-[10px] text-white/70 mt-1">Based on current {e.currentUsage} kWh/month trend</p>
               <div className="flex items-center gap-3 mt-2 text-[10px]">
-                <span className="flex items-center gap-1 text-emerald-400"><TrendingDown size={12} /> 8% vs last month</span>
+                <span className="flex items-center gap-1 text-emerald-400"><TrendingDown size={12} /> {Math.abs(e.months[0]?.change || 8)}% vs last month</span>
                 <span className="text-white/50">|</span>
-                <span className="text-amber-400">Above budget by ₱180</span>
+                <span className="text-amber-400">Above budget by ₱{e.predictedBill - e.budgetTotal}</span>
               </div>
             </div>
           </div>
           <div className="mt-3 bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3">
             <div className="flex justify-between text-[10px] text-white/70 mb-1">
               <span>Current usage</span>
-              <span>214 kWh</span>
+              <span>{e.currentUsage} kWh</span>
             </div>
             <div className="h-2 rounded-full bg-white/20 overflow-hidden">
-              <div className="h-full rounded-full bg-white/40" style={{ width: "85%" }} />
+              <div className="h-full rounded-full bg-white/40" style={{ width: `${Math.min(100, (e.currentUsage / 250) * 100)}%` }} />
             </div>
             <div className="flex justify-between text-[10px] text-white/70 mt-1">
               <span>Budget</span>
@@ -94,23 +70,23 @@ function EnergyHistory() {
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-gradient-to-br from-primary to-primary-dark p-4 text-primary-foreground shadow-glow">
             <PiggyBank size={16} className="opacity-80" />
-            <p className="text-2xl font-bold mt-2">₱5,240</p>
+            <p className="text-2xl font-bold mt-2">₱{e.totalSavingsYear.toLocaleString()}</p>
             <p className="text-[10px] opacity-80">Total Savings This Year</p>
           </div>
           <div className="rounded-2xl bg-card p-4 shadow-card">
             <BarChart3 size={16} className="text-primary" />
-            <p className="text-2xl font-bold mt-2">₱2,740</p>
+            <p className="text-2xl font-bold mt-2">₱{e.avgBill.toLocaleString()}</p>
             <p className="text-[10px] text-muted-foreground">Average Monthly Bill</p>
           </div>
           <div className="rounded-2xl bg-card p-4 shadow-card">
             <TrendingDown size={16} className="text-success" />
-            <p className="text-2xl font-bold mt-2 text-success">₱2,350</p>
-            <p className="text-[10px] text-muted-foreground">Lowest Month (Nov)</p>
+            <p className="text-2xl font-bold mt-2 text-success">₱{e.lowestMonth.toLocaleString()}</p>
+            <p className="text-[10px] text-muted-foreground">Lowest Month ({e.lowestMonthLabel})</p>
           </div>
           <div className="rounded-2xl bg-card p-4 shadow-card">
             <TrendingUp size={16} className="text-destructive" />
-            <p className="text-2xl font-bold mt-2 text-destructive">₱3,100</p>
-            <p className="text-[10px] text-muted-foreground">Highest Month (Jul)</p>
+            <p className="text-2xl font-bold mt-2 text-destructive">₱{e.highestMonth.toLocaleString()}</p>
+            <p className="text-[10px] text-muted-foreground">Highest Month ({e.highestMonthLabel})</p>
           </div>
         </div>
 
@@ -123,7 +99,7 @@ function EnergyHistory() {
             </div>
           </div>
           <div className="flex items-end gap-1 h-28">
-            {monthlyData.map((v, i) => (
+            {e.monthlyData.map((v, i) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
                 <div
                   className="w-full rounded-t transition-all"
@@ -143,7 +119,7 @@ function EnergyHistory() {
         <div>
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Monthly Breakdown</h3>
           <div className="space-y-2">
-            {months.map((m, i) => (
+            {e.months.map((m, i) => (
               <div key={i} className="rounded-2xl bg-card p-4 shadow-card border border-primary/5">
                 <div className="flex items-start justify-between">
                   <div>
@@ -197,8 +173,8 @@ function EnergyHistory() {
         <div>
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Energy Journey Timeline</h3>
           <div className="space-y-0 relative before:absolute before:left-4 before:top-0 before:h-full before:w-px before:bg-border">
-            {timeline.map((t, i) => {
-              const Icon = t.icon;
+            {e.timeline.map((t, i) => {
+              const Icon = t.type === "good" ? CheckCircle2 : t.type === "warn" ? AlertTriangle : Lightbulb;
               const dotColor = t.type === "good" ? "bg-success" : t.type === "warn" ? "bg-warning" : "bg-primary";
               const bgColor = t.type === "good" ? "bg-success/10 border-success/20" : t.type === "warn" ? "bg-warning/10 border-warning/20" : "bg-primary/10 border-primary/20";
               return (
@@ -221,8 +197,8 @@ function EnergyHistory() {
         <div>
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Savings Achievements</h3>
           <div className="grid grid-cols-2 gap-2">
-            {achievements.map((a, i) => {
-              const Icon = a.icon;
+            {e.achievements.map((a, i) => {
+              const Icon = i === 0 ? Trophy : i === 1 ? Star : i === 2 ? Leaf : Award;
               return (
                 <div key={i} className="rounded-2xl bg-card p-4 shadow-card text-center border border-primary/5">
                   <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-warm text-primary-foreground shadow-glow mx-auto">

@@ -9,6 +9,7 @@ import {
   AlertTriangle, CheckCircle2, Sparkles, Home
 } from "lucide-react";
 import { useState } from "react";
+import { useEnergyData } from "@/lib/storage/context";
 
 export const Route = createFileRoute("/appliances")({
   component: ApplianceTracker,
@@ -47,13 +48,14 @@ const ratePerKwh = 12;
 type Appliance = { name: string; watts: number; hrs: number; days: number; weeks: number; qty: number; cost: number; kwh: number };
 
 function ApplianceTracker() {
+  const { data, setTrackedAppliances } = useEnergyData();
+  const appliances = data.trackedAppliances;
   const [selectedPreset, setSelectedPreset] = useState(appliancePresets[0].name);
   const [wattage, setWattage] = useState(appliancePresets[0].watts);
   const [hoursPerDay, setHoursPerDay] = useState(4);
   const [daysPerWeek, setDaysPerWeek] = useState(7);
   const [weeksPerMonth, setWeeksPerMonth] = useState(4);
   const [quantity, setQuantity] = useState(1);
-  const [appliances, setAppliances] = useState<Appliance[]>([]);
   const [showForm, setShowForm] = useState(false);
 
   const selectPreset = (name: string) => {
@@ -69,12 +71,12 @@ function ApplianceTracker() {
   const addAppliance = () => {
     const kwh = calcKwh(wattage, hoursPerDay, daysPerWeek, weeksPerMonth, quantity);
     const cost = calcCost(kwh);
-    setAppliances(prev => [...prev, { name: selectedPreset, watts: wattage, hrs: hoursPerDay, days: daysPerWeek, weeks: weeksPerMonth, qty: quantity, cost, kwh }]);
+    setTrackedAppliances(prev => [...prev, { name: selectedPreset, watts: wattage, hrs: hoursPerDay, days: daysPerWeek, weeks: weeksPerMonth, qty: quantity, cost, kwh }]);
     setShowForm(false);
   };
 
   const removeAppliance = (idx: number) =>
-    setAppliances(prev => prev.filter((_, i) => i !== idx));
+    setTrackedAppliances(prev => prev.filter((_, i) => i !== idx));
 
   const currentKwh = calcKwh(wattage, hoursPerDay, daysPerWeek, weeksPerMonth, quantity);
   const currentCost = calcCost(currentKwh);

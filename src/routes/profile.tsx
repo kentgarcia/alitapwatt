@@ -3,6 +3,8 @@ import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Users, Globe, Bell, LogOut, Target, Snowflake, Tv, Refrigerator, WashingMachine, Microwave, Lightbulb, BarChart3 } from "lucide-react";
 import { useState } from "react";
+import { useLocalStorage } from "@/lib/storage/hooks";
+import { useEnergyData } from "@/lib/storage/context";
 
 export const Route = createFileRoute("/profile")({ component: Profile });
 
@@ -16,8 +18,8 @@ const allAppliances = [
 ];
 
 function Profile() {
-  const [checked, setChecked] = useState<Record<string, boolean>>({ Aircon: true, Refrigerator: true, TV: true, "LED Lights": true });
-  const [budget, setBudget] = useState(3000);
+  const [checked, setChecked] = useLocalStorage<Record<string, boolean>>("alitapwatt_profile_checked", { Aircon: true, Refrigerator: true, TV: true, "LED Lights": true });
+  const [budget, setBudget] = useLocalStorage("alitapwatt_profile_budget", 3000);
 
   return (
     <AppShell>
@@ -86,6 +88,8 @@ function Profile() {
           </Link>
         </Button>
 
+        <ResetDataButton />
+
         <p className="text-center text-[10px] text-muted-foreground">AlitapWatt v1.0 · A small light for your home</p>
       </div>
     </AppShell>
@@ -97,6 +101,26 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <div>
       <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-2 mb-2">{title}</h3>
       <div className="rounded-2xl bg-card shadow-card overflow-hidden">{children}</div>
+    </div>
+  );
+}
+
+function ResetDataButton() {
+  const { resetData } = useEnergyData();
+  const [confirm, setConfirm] = useState(false);
+  if (!confirm) return (
+    <button onClick={() => setConfirm(true)} className="w-full text-center text-[10px] text-muted-foreground hover:text-destructive transition py-1">
+      Reset all data
+    </button>
+  );
+  return (
+    <div className="text-center space-y-1">
+      <p className="text-[10px] text-destructive">This will erase all your data!</p>
+      <div className="flex items-center justify-center gap-2">
+        <button onClick={resetData} className="text-[10px] font-semibold text-destructive">Confirm Reset</button>
+        <span className="text-muted-foreground">·</span>
+        <button onClick={() => setConfirm(false)} className="text-[10px] text-muted-foreground">Cancel</button>
+      </div>
     </div>
   );
 }

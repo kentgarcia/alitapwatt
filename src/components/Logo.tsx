@@ -5,7 +5,7 @@ export function Logo({ size = 88, glow = true }: { size?: number; glow?: boolean
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       {glow && (
         <span
-          className="absolute inset-0 rounded-full bg-primary-soft/60 blur-2xl animate-firefly"
+          className="absolute inset-0 rounded-2xl bg-primary-soft/60 blur-2xl animate-firefly"
           aria-hidden
         />
       )}

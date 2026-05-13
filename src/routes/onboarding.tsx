@@ -1,14 +1,28 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import { MobileFrame } from "@/components/MobileFrame";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Sparkles, Eraser } from "lucide-react";
 import { useState } from "react";
+import { useEnergyData } from "@/lib/storage/context";
 import teachImg from "../../assets/teach.png";
 import ideaImg from "../../assets/idea.png";
 import thinkingImg from "../../assets/thinking.png";
+import happyImg from "../../assets/happy.png";
 
 export const Route = createFileRoute("/onboarding")({
   component: Onboarding,
+  beforeLoad: () => {
+    if (typeof window === "undefined") return;
+    const raw = localStorage.getItem("alitapwatt_data");
+    if (raw) {
+      try {
+        const data = JSON.parse(raw);
+        if (data.onboardingComplete) throw redirect({ to: "/home" });
+      } catch (e) {
+        if (e instanceof redirect) throw e;
+      }
+    }
+  },
   head: () => ({
     meta: [
       { title: "Welcome to AlitapWatt — Quick Tour" },
@@ -35,16 +49,51 @@ const slides = [
   },
 ];
 
+const TOTAL_STEPS = 4;
+
 function Onboarding() {
   const navigate = useNavigate();
+  const { completeOnboarding } = useEnergyData();
   const [step, setStep] = useState(0);
-  const isLast = step === slides.length - 1;
+  const isLastSlide = step === slides.length - 1;
+  const isChoiceScreen = step === TOTAL_STEPS - 1;
   const slide = slides[step];
 
   const next = () => {
-    if (isLast) navigate({ to: "/home" });
+    if (isLastSlide) setStep(step + 1);
     else setStep((s) => s + 1);
   };
+
+  const choose = (seed: boolean) => {
+    completeOnboarding(seed);
+    navigate({ to: "/home" });
+  };
+
+  if (isChoiceScreen) {
+    return (
+      <MobileFrame>
+        <div className="relative flex min-h-screen lg:min-h-full flex-col px-6 py-8 overflow-hidden">
+          <div className="flex-1 flex flex-col items-center justify-center text-center gap-6">
+            <img src={happyImg} alt="" className="h-24 w-24 object-contain" />
+            <div className="space-y-2 max-w-xs">
+              <h1 className="text-2xl font-bold tracking-tight">You're all set!</h1>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Would you like to start with sample data or begin fresh?
+              </p>
+            </div>
+            <div className="w-full space-y-3 max-w-xs">
+              <Button variant="default" size="lg" className="w-full py-5 text-base" onClick={() => choose(true)}>
+                <Sparkles size={18} /> Try with Sample Data
+              </Button>
+              <Button variant="outline" size="lg" className="w-full py-5 text-base" onClick={() => choose(false)}>
+                <Eraser size={18} /> Start Fresh
+              </Button>
+            </div>
+          </div>
+        </div>
+      </MobileFrame>
+    );
+  }
 
   return (
     <MobileFrame>
@@ -52,7 +101,7 @@ function Onboarding() {
         {/* Top bar */}
         <div className="flex items-center justify-between">
           <div className="flex gap-1.5">
-            {slides.map((_, i) => (
+            {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
               <span
                 key={i}
                 className={`h-1.5 rounded-full transition-all ${
@@ -61,9 +110,9 @@ function Onboarding() {
               />
             ))}
           </div>
-          <Link to="/home" className="text-xs font-medium text-muted-foreground hover:text-primary transition">
+          <button onClick={() => choose(true)} className="text-xs font-medium text-muted-foreground hover:text-primary transition">
             Skip
-          </Link>
+          </button>
         </div>
 
         {/* Floating fireflies */}
@@ -91,9 +140,9 @@ function Onboarding() {
         {/* CTA */}
         <div className="relative space-y-3">
           <Button variant="default" size="lg" className="w-full py-4 text-base active:scale-[0.98]" onClick={next}>
-            {isLast ? "Get Started" : "Next"} <ArrowRight size={18} />
+            {isLastSlide ? "Continue" : "Next"} <ArrowRight size={18} />
           </Button>
-          {!isLast && (
+          {!isLastSlide && (
             <button
               onClick={() => setStep((s) => Math.max(0, s - 1))}
               disabled={step === 0}
@@ -102,7 +151,7 @@ function Onboarding() {
               Back
             </button>
           )}
-          {isLast && <div className="h-[18px]" />}
+          {isLastSlide && <div className="h-[18px]" />}
         </div>
       </div>
     </MobileFrame>
