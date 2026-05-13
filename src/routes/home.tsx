@@ -10,6 +10,9 @@ import {
 import happyImg from "../../assets/happy.png";
 import { useState, useEffect } from "react";
 import { useEnergyData } from "@/lib/storage/context";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, Cell,
+} from "recharts";
 
 export const Route = createFileRoute("/home")({
   component: Home,
@@ -58,25 +61,14 @@ function CircularScore({ score, size = 100, stroke = 8 }: { score: number; size?
   );
 }
 
-function DailyChart({ data, color }: { data: number[]; color: string }) {
-  const max = Math.max(...data);
-  return (
-    <div className="flex items-end gap-1.5 h-20">
-      {data.map((v, i) => (
-        <div key={i} className="flex-1 flex flex-col items-center gap-1">
-          <div className="w-full rounded-t" style={{ height: `${(v / max) * 100}%`, backgroundColor: color, opacity: 0.7 + (v / max) * 0.3 }} />
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function Home() {
   const { data } = useEnergyData();
   const [greeting, setGreeting] = useState("");
   const [notifOpen, setNotifOpen] = useState(false);
+  const [filter, setFilter] = useState("All");
   const e = data.energy;
   const notifications = e.notifications;
+  const filtered = filter === "All" ? appliances : appliances.filter(a => a.efficiency === filter);
 
   useEffect(() => {
     const h = new Date().getHours();
@@ -176,7 +168,7 @@ function Home() {
 
         {/* ===== AI INSIGHT CARD ===== */}
         <div className="rounded-2xl bg-card border border-primary/10 p-4 shadow-card flex items-start gap-3">
-          <img src={happyImg} alt="" className="h-12 w-12 object-contain shrink-0 mt-1" />
+          <img src={happyImg} alt="" className="h-20 w-20 object-contain shrink-0 mt-1" />
           <div className="space-y-2 flex-1">
             <p className="text-[10px] text-primary/60 font-semibold uppercase tracking-wider">AlitapWatt AI Insight</p>
             <div className="bg-primary/5 rounded-xl px-3.5 py-2.5 space-y-1.5">
@@ -259,38 +251,55 @@ function Home() {
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-semibold uppercase tracking-wide">Daily Consumption</h3>
             <div className="flex items-center gap-2 text-[9px] text-muted-foreground">
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-primary" /> Today</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-muted-foreground/30" /> Yesterday</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-primary" /> Daily</span>
             </div>
           </div>
-          <DailyChart data={e.dailyData} color="#F97316" />
-          <div className="flex justify-between text-[9px] text-muted-foreground mt-1">
-            {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d => <span key={d}>{d}</span>)}
-          </div>
+          <ResponsiveContainer width="100%" height={120}>
+            <BarChart data={e.dailyData.map((v, i) => ({ day: ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][i], kwh: v }))} margin={{ top: 5, right: 5, bottom: 0, left: -15 }}>
+              <XAxis dataKey="day" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
+              <YAxis hide />
+              <Tooltip contentStyle={{ fontSize: 10, borderRadius: 8, border: "1px solid oklch(0.92 0.03 70)" }} formatter={(v: number) => [`${v.toFixed(1)} kWh`, "Usage"]} />
+              <Bar dataKey="kwh" radius={[4, 4, 0, 0]} fill="#F97316">
+                {e.dailyData.map((_, i) => (
+                  <Cell key={i} fill={i >= 5 ? "#F97316" : "#FDBA74"} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-card p-4 shadow-card">
             <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-3">Weekly Trend</h3>
-            <div className="flex items-end gap-1 h-20">
-              {e.weeklyData.map((v, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
-                  <div className="w-full rounded-t bg-primary transition-all" style={{ height: `${v}%`, opacity: 0.6 + (v / 100) * 0.4 }} />
-                  <span className="text-[8px] text-muted-foreground">{["M","T","W","T","F","S","S"][i]}</span>
-                </div>
-              ))}
-            </div>
+            <ResponsiveContainer width="100%" height={100}>
+              <AreaChart data={e.weeklyData.map((v, i) => ({ day: ["M","T","W","T","F","S","S"][i], kwh: v }))} margin={{ top: 5, right: 5, bottom: 0, left: -15 }}>
+                <defs>
+                  <linearGradient id="weeklyGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#F97316" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="#F97316" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="day" tick={{ fontSize: 8 }} axisLine={false} tickLine={false} />
+                <YAxis hide />
+                <Tooltip contentStyle={{ fontSize: 10, borderRadius: 8 }} formatter={(v: number) => [`${v.toFixed(1)} kWh`, "Usage"]} />
+                <Area type="monotone" dataKey="kwh" stroke="#F97316" fill="url(#weeklyGrad)" strokeWidth={2} dot={{ r: 2, fill: "#F97316" }} />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
           <div className="rounded-2xl bg-card p-4 shadow-card">
             <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-3">Peak Hours</h3>
-            <div className="flex items-end gap-0.5 h-20">
-              {e.peakHours.map((v, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center">
-                  <div className="w-full rounded-t" style={{ height: `${v}%`, backgroundColor: v > 60 ? "#ef4444" : v > 40 ? "#eab308" : "#F97316", opacity: 0.5 + (v / 100) * 0.5 }} />
-                  {i % 3 === 0 && <span className="text-[6px] text-muted-foreground mt-0.5">{peakLabels[i]}</span>}
-                </div>
-              ))}
-            </div>
+            <ResponsiveContainer width="100%" height={100}>
+              <BarChart data={e.peakHours.map((v, i) => ({ hour: peakLabels[i], kw: v }))} margin={{ top: 5, right: 5, bottom: 0, left: -15 }}>
+                <XAxis dataKey="hour" tick={{ fontSize: 7 }} axisLine={false} tickLine={false} interval={2} />
+                <YAxis hide />
+                <Tooltip contentStyle={{ fontSize: 10, borderRadius: 8 }} formatter={(v: number) => [`${v.toFixed(1)} kW`, "Load"]} />
+                <Bar dataKey="kw" radius={[3, 3, 0, 0]}>
+                  {e.peakHours.map((v, i) => (
+                    <Cell key={i} fill={v > 60 ? "#ef4444" : v > 40 ? "#eab308" : "#F97316"} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
@@ -332,37 +341,60 @@ function Home() {
 
         {/* ===== APPLIANCE MONITORING ===== */}
         <div>
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Appliance Monitoring</h3>
-          <div className="space-y-2">
-            {appliances.map((a, i) => {
-              const Icon = a.icon;
-              const effColor = a.efficiency === "Excellent" ? "text-success" : a.efficiency === "Good" ? "text-primary" : "text-warning";
-              const effBg = a.efficiency === "Excellent" ? "bg-success/10" : a.efficiency === "Good" ? "bg-primary/10" : "bg-warning/10";
-              return (
-                <div key={i} className="rounded-2xl bg-card p-3.5 shadow-card flex items-center gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-warm text-primary-foreground shadow-glow">
-                    <Icon size={18} />
-                  </span>
-                  <div className="flex-1 min-w-0 grid grid-cols-4 gap-2 text-[10px]">
-                    <div>
-                      <p className="font-semibold text-foreground">{a.name}</p>
-                      <p className="text-muted-foreground mt-0.5">{a.hours}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">kWh</p>
-                      <p className="font-semibold text-foreground">{a.kwh}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Cost</p>
-                      <p className="font-semibold text-foreground">₱{a.cost}</p>
-                    </div>
-                    <div className="text-right">
-                      <span className={`inline-block rounded-full px-2 py-0.5 text-[9px] font-semibold ${effBg} ${effColor}`}>{a.efficiency}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Appliance Monitoring</h3>
+            <Link to="/appliances" className="text-[10px] font-semibold text-primary">View All →</Link>
+          </div>
+
+          {/* filter tabs */}
+          <div className="flex gap-1.5 mb-3 overflow-x-auto no-scrollbar">
+            {["All", "Excellent", "Good", "Moderate"].map((f) => (
+              <button key={f} onClick={() => setFilter(f)}
+                className={`rounded-full px-3 py-1 text-[10px] font-medium whitespace-nowrap transition ${
+                  filter === f ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                }`}
+              >{f}</button>
+            ))}
+          </div>
+
+          {/* table */}
+          <div className="rounded-2xl bg-card shadow-card overflow-hidden">
+            <table className="w-full text-[11px]">
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="text-left font-semibold text-muted-foreground py-2.5 px-3">Appliance</th>
+                  <th className="text-left font-semibold text-muted-foreground py-2.5 px-2">Status</th>
+                  <th className="text-right font-semibold text-muted-foreground py-2.5 px-2">kWh</th>
+                  <th className="text-right font-semibold text-muted-foreground py-2.5 px-2">Cost</th>
+                  <th className="text-right font-semibold text-muted-foreground py-2.5 px-3">Rating</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((a, i) => {
+                  const Icon = a.icon;
+                  const effColor = a.efficiency === "Excellent" ? "text-emerald-600" : a.efficiency === "Good" ? "text-primary" : "text-amber-600";
+                  const effBg = a.efficiency === "Excellent" ? "bg-emerald-50" : a.efficiency === "Good" ? "bg-primary/10" : "bg-amber-50";
+                  return (
+                    <tr key={i} className="border-b border-border last:border-0 hover:bg-muted/30 transition">
+                      <td className="py-3 px-3">
+                        <div className="flex items-center gap-2.5">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-warm text-primary-foreground shadow-glow">
+                            <Icon size={15} />
+                          </span>
+                          <span className="font-semibold text-foreground">{a.name}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-2 text-muted-foreground">{a.hours}</td>
+                      <td className="py-3 px-2 text-right font-semibold">{a.kwh}</td>
+                      <td className="py-3 px-2 text-right font-semibold">₱{a.cost.toLocaleString()}</td>
+                      <td className="py-3 px-3 text-right">
+                        <span className={`inline-block rounded-full px-2.5 py-0.5 text-[9px] font-semibold ${effBg} ${effColor}`}>{a.efficiency}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
 

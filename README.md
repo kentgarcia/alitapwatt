@@ -29,7 +29,7 @@
 - AI-generated insights with personalized recommendations
 
 ### 📄 AI Bill Scanner
-- Upload or snap a photo of your Meralco bill
+- Upload or snap a photo of your electricity bill
 - OCR-powered text detection and charge extraction
 - AI-generated bill explanations in plain language
 - Bill breakdown cards with Taglish translations

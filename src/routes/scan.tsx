@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
-import { Camera, Upload, Sparkles, FileText, Check, Loader2, Lightbulb, Zap, DollarSign, Radio, Receipt, HelpCircle, X } from "lucide-react";
+import { Camera, Upload, Sparkles, FileText, Check, Loader2, Lightbulb, Zap, DollarSign, Radio, Receipt, HelpCircle, X, Calendar, Clock, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useLocalStorage } from "@/lib/storage/hooks";
 import bill1 from "../../assets/bills/1.png";
 import bill2 from "../../assets/bills/2.png";
 import bill3 from "../../assets/bills/3.png";
@@ -24,6 +25,12 @@ const steps = [
   { label: "Generating AI explanation…", sub: "Creating personalized insights" },
 ];
 
+type SavedBill = {
+  month: string; year: number; amount: number; kwh: number; dueDate: string; generation: number; savedAt: string;
+  breakdowns: { name: string; amount: string; pct: number; desc: string }[];
+  aiExplanation: string[];
+};
+
 function Scan() {
   const [stage, setStage] = useState<"upload" | "scanning" | "result">("upload");
   const [step, setStep] = useState(0);
@@ -31,6 +38,12 @@ function Scan() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [selectedBill, setSelectedBill] = useState<string | null>(null);
   const [captured, setCaptured] = useState(false);
+  const [tab, setTab] = useState<"scan" | "history">("scan");
+  const [savedBills, setSavedBills] = useLocalStorage<SavedBill[]>("alitapwatt_bill_history", []);
+  const [showSavePrompt, setShowSavePrompt] = useState(false);
+  const [saveMonth, setSaveMonth] = useState(new Date().getMonth());
+  const [saveYear, setSaveYear] = useState(new Date().getFullYear());
+  const [selectedHistoryBill, setSelectedHistoryBill] = useState<SavedBill | null>(null);
   const sampleBills = [
     { src: bill1, label: "Bill #1" },
     { src: bill2, label: "Bill #2" },
@@ -39,13 +52,13 @@ function Scan() {
 
   useEffect(() => {
     if (stage !== "scanning") return;
-    if (step >= steps.length) { setStage("result"); return; }
+    if (step >= steps.length) { setStage("result"); setShowSavePrompt(true); return; }
     const t = setTimeout(() => setStep(s => s + 1), step === 0 ? 1800 : 1200);
     return () => clearTimeout(t);
   }, [stage, step]);
 
-  const startScan = () => { setStage("scanning"); setStep(0); };
-  const reset = () => { setStage("upload"); setCaptured(false); setSelectedBill(null); };
+  const startScan = () => { setStage("scanning"); setStep(0); setShowSavePrompt(false); };
+  const reset = () => { setStage("upload"); setCaptured(false); setSelectedBill(null); setShowSavePrompt(false); };
   const pickCameraBill = () => {
     const randomBill = sampleBills[Math.floor(Math.random() * sampleBills.length)];
     setSelectedBill(randomBill.label);
@@ -53,13 +66,148 @@ function Scan() {
     setTimeout(() => { setCameraOpen(false); startScan(); }, 600);
   };
 
+  const saveBill = () => {
+    const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    const newBill: SavedBill = {
+      month: months[saveMonth],
+      year: saveYear,
+      amount: 2872,
+      kwh: 215,
+      dueDate: "Nov 15",
+      generation: 1206,
+      savedAt: new Date().toISOString(),
+      breakdowns: breakdowns.map(b => ({ name: b.name, amount: b.amount, pct: b.pct, desc: b.desc })),
+      aiExplanation: [
+        "Your bill increased because your air conditioning usage was significantly higher during hotter days this month.",
+        "Generation charges accounted for 42% of your total bill.",
+        "Your household consumed 215 kWh, which is above your normal monthly average.",
+      ],
+    };
+    setSavedBills(prev => {
+      const existing = prev.filter(b => b.month !== newBill.month || b.year !== newBill.year);
+      return [newBill, ...existing];
+    });
+    setShowSavePrompt(false);
+  };
+
   return (
     <AppShell>
       <div className="px-4 pt-6 pb-6 space-y-4">
-        <header>
+        {/* header */}
+        <div className="flex items-center justify-between mb-1">
           <h1 className="text-2xl font-bold">Scan Your Bill</h1>
-          <p className="text-sm text-muted-foreground">Snap a photo and let AI break it down for you.</p>
-        </header>
+          <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[10px] font-semibold text-primary">{savedBills.length} saved</span>
+        </div>
+        <p className="text-sm text-muted-foreground -mt-2">Snap a photo and let AI break it down for you.</p>
+
+        {/* tabs */}
+        <div className="flex rounded-xl bg-muted p-1">
+          <button onClick={() => setTab("scan")} className={`flex-1 rounded-lg py-2 text-xs font-medium transition ${tab === "scan" ? "bg-card shadow-card text-foreground" : "text-muted-foreground"}`}><Camera size={14} className="inline mr-1" /> Scan</button>
+          <button onClick={() => setTab("history")} className={`flex-1 rounded-lg py-2 text-xs font-medium transition ${tab === "history" ? "bg-card shadow-card text-foreground" : "text-muted-foreground"}`}><Clock size={14} className="inline mr-1" /> Bill History</button>
+        </div>
+
+        {/* ===== HISTORY TAB ===== */}
+        {tab === "history" && (
+          <div className="space-y-3 animate-float-up">
+            {selectedHistoryBill ? (
+              <div>
+                <button onClick={() => setSelectedHistoryBill(null)} className="text-xs text-primary font-semibold mb-3 flex items-center gap-1">
+                  ← Back to history
+                </button>
+                <div className="rounded-2xl bg-card p-5 shadow-card space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Calendar size={18} className="text-primary" />
+                    <p className="text-base font-bold">{selectedHistoryBill.month} {selectedHistoryBill.year}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-xl bg-gradient-to-br from-primary to-primary-dark p-3 text-primary-foreground">
+                      <p className="text-[9px] opacity-80 uppercase tracking-wide">Total Amount</p>
+                      <p className="text-xl font-bold mt-0.5">₱{selectedHistoryBill.amount.toLocaleString()}</p>
+                    </div>
+                    <div className="rounded-xl bg-muted p-3">
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-wide">kWh Used</p>
+                      <p className="text-xl font-bold mt-0.5">{selectedHistoryBill.kwh}</p>
+                    </div>
+                    <div className="rounded-xl bg-muted p-3">
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Due Date</p>
+                      <p className="text-base font-bold mt-0.5">{selectedHistoryBill.dueDate}</p>
+                    </div>
+                    <div className="rounded-xl bg-muted p-3">
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Generation</p>
+                      <p className="text-base font-bold mt-0.5">₱{selectedHistoryBill.generation.toLocaleString()}</p>
+                    </div>
+                  </div>
+                  <p className="text-[9px] text-muted-foreground">Saved on {new Date(selectedHistoryBill.savedAt).toLocaleDateString()}</p>
+                </div>
+
+                {/* AI Bill Explanation */}
+                <div className="rounded-2xl bg-gradient-to-r from-primary to-primary-dark p-5 shadow-glow">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Sparkles size={16} className="text-white/80" />
+                    <p className="text-[10px] text-white/60 font-semibold uppercase tracking-wide">AI Bill Explanation</p>
+                  </div>
+                  <div className="space-y-2 bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3">
+                    {selectedHistoryBill.aiExplanation.map((line, i) => (
+                      <p key={i} className={`text-xs leading-relaxed ${i === 0 ? "text-white" : "text-white/70"}`}>{line}</p>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Bill Breakdown */}
+                <div>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Bill Breakdown</h3>
+                  <div className="space-y-2">
+                    {selectedHistoryBill.breakdowns.map((b, i) => (
+                      <div key={i} className="rounded-2xl bg-card p-3.5 shadow-card flex items-center gap-3">
+                        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                          i === 0 ? "bg-gradient-warm text-primary-foreground shadow-glow" : "bg-primary/10 text-primary"
+                        }`}>
+                          <Zap size={16} className={i === 0 ? "" : "text-primary"} />
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-semibold">{b.name}</p>
+                            <span className="text-sm font-bold">{b.amount}</span>
+                          </div>
+                          <div className="mt-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                            <div className="h-full rounded-full bg-gradient-warm" style={{ width: `${b.pct}%` }} />
+                          </div>
+                          <p className="text-[10px] text-muted-foreground mt-1">{b.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : savedBills.length === 0 ? (
+              <div className="rounded-2xl bg-muted p-8 text-center">
+                <FileText size={32} className="mx-auto text-muted-foreground/40" />
+                <p className="text-sm font-semibold mt-2">No bills saved yet</p>
+                <p className="text-xs text-muted-foreground mt-1">Scan your first bill to start tracking.</p>
+              </div>
+            ) : (
+              savedBills.map((b, i) => (
+                <button key={i} onClick={() => setSelectedHistoryBill(b)} className="w-full rounded-2xl bg-card p-4 shadow-card flex items-center gap-3 text-left active:scale-[0.99] transition">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-warm text-primary-foreground shadow-glow">
+                    <Calendar size={18} />
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold">{b.month} {b.year}</p>
+                    <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-0.5">
+                      <span>₱{b.amount.toLocaleString()}</span>
+                      <span>{b.kwh} kWh</span>
+                      <span>Due {b.dueDate}</span>
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+                </button>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* ===== SCAN CONTENT ===== */}
+        {tab === "scan" && (<>
 
         {/* ===== UPLOAD STAGE ===== */}
         {stage === "upload" && (
@@ -76,7 +224,7 @@ function Scan() {
                 </div>
                 <div className="text-center">
                   <p className="text-base font-semibold">Tap to capture bill</p>
-                  <p className="text-xs text-muted-foreground mt-1">Position your Meralco bill within the frame</p>
+                  <p className="text-xs text-muted-foreground mt-1">Position your bill within the frame</p>
                 </div>
               </div>
             </div>
@@ -291,10 +439,45 @@ function Scan() {
               </div>
             </div>
 
+            {/* ===== SAVE BILL SECTION ===== */}
+            {showSavePrompt && (
+              <div className="rounded-2xl bg-card p-4 shadow-card border border-primary/10">
+                <div className="flex items-center gap-2 mb-3">
+                  <Calendar size={16} className="text-primary" />
+                  <p className="text-xs font-semibold">Save this bill for tracking</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <div>
+                    <label className="text-[9px] text-muted-foreground font-medium">Month</label>
+                    <select value={saveMonth} onChange={e => setSaveMonth(Number(e.target.value))}
+                      className="mt-1 w-full rounded-lg bg-muted px-2.5 py-2 text-xs outline-none focus:ring-2 focus:ring-primary/20">
+                      {["January","February","March","April","May","June","July","August","September","October","November","December"].map((m, i) => (
+                        <option key={i} value={i}>{m}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[9px] text-muted-foreground font-medium">Year</label>
+                    <input type="number" value={saveYear} onChange={e => setSaveYear(Number(e.target.value))}
+                      className="mt-1 w-full rounded-lg bg-muted px-2.5 py-2 text-xs outline-none focus:ring-2 focus:ring-primary/20" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button variant="default" size="sm" className="py-2.5 text-xs" onClick={saveBill}>
+                    <Check size={14} /> Save Bill
+                  </Button>
+                  <Button variant="outline" size="sm" className="py-2.5 text-xs" onClick={reset}>
+                    Discard
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <Button variant="outline" size="lg" className="w-full py-4 text-sm" onClick={reset}>
               Scan Another Bill
             </Button>
           </div>
+        )}</>
         )}
       </div>
     </AppShell>

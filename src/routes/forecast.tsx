@@ -6,18 +6,26 @@ import {
   Award, Leaf, PiggyBank, Zap,
   Thermometer, Lightbulb, Sparkles,
   ChevronRight, BarChart3, AlertTriangle, CheckCircle2,
-  Star, Trophy
+  Star, Trophy, X, Calendar, ArrowLeft
 } from "lucide-react";
 import happyImg from "../../assets/happy.png";
 import ideaImg from "../../assets/idea.png";
 import teachImg from "../../assets/teach.png";
 import { useEnergyData } from "@/lib/storage/context";
+import { useState } from "react";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
+} from "recharts";
 
 export const Route = createFileRoute("/forecast")({ component: EnergyHistory });
 
 function EnergyHistory() {
   const { data } = useEnergyData();
   const e = data.energy;
+  const [selectedMonth, setSelectedMonth] = useState<typeof e.months[0] | null>(null);
+  const [showPdfPreview, setShowPdfPreview] = useState(false);
+  const [showSharePreview, setShowSharePreview] = useState(false);
+  const monthLabels = ["J","F","M","A","M","J","J","A","S","O","N","D"];
   return (
     <AppShell>
       <div className="px-4 pt-6 pb-6 space-y-5">
@@ -98,50 +106,82 @@ function EnergyHistory() {
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-primary" /> This Year</span>
             </div>
           </div>
-          <div className="flex items-end gap-1 h-28">
-            {e.monthlyData.map((v, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
-                <div
-                  className="w-full rounded-t transition-all"
-                  style={{
-                    height: `${(v / 3100) * 100}%`,
-                    backgroundColor: v > 2900 ? "#ef4444" : v > 2650 ? "#eab308" : "#F97316",
-                    opacity: 0.6 + (v / 3100) * 0.4,
-                  }}
-                />
-                <span className="text-[6px] text-muted-foreground">{["J","F","M","A","M","J","J","A","S","O","N","D"][i]}</span>
-              </div>
-            ))}
-          </div>
+          <ResponsiveContainer width="100%" height={130}>
+            <BarChart data={e.monthlyData.map((v, i) => ({ month: monthLabels[i], bill: v }))} margin={{ top: 5, right: 5, bottom: 0, left: -15 }}>
+              <XAxis dataKey="month" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
+              <YAxis hide />
+              <Tooltip contentStyle={{ fontSize: 10, borderRadius: 8 }} formatter={(v: number) => [`₱${v.toLocaleString()}`, "Bill"]} />
+              <Bar dataKey="bill" radius={[4, 4, 0, 0]}>
+                {e.monthlyData.map((v, i) => (
+                  <Cell key={i} fill={v > 2900 ? "#ef4444" : v > 2650 ? "#eab308" : "#F97316"} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </div>
 
-        {/* ── monthly bill timeline ── */}
+        {/* ── monthly breakdown ── */}
         <div>
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Monthly Breakdown</h3>
-          <div className="space-y-2">
-            {e.months.map((m, i) => (
-              <div key={i} className="rounded-2xl bg-card p-4 shadow-card border border-primary/5">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-bold">{m.name}</p>
-                    <div className="flex items-center gap-3 mt-1.5">
-                      <p className="text-lg font-bold">₱{m.bill}</p>
-                      <span className="text-[10px] text-muted-foreground">{m.kwh} kWh</span>
-                      <span className={`flex items-center gap-0.5 text-[10px] font-semibold ${m.change < 0 ? "text-success" : "text-destructive"}`}>
-                        {m.change < 0 ? <TrendingDown size={12} /> : <TrendingUp size={12} />}
-                        {Math.abs(m.change)}%
-                      </span>
-                    </div>
+          {selectedMonth ? (
+            <div className="animate-float-up">
+              <button onClick={() => setSelectedMonth(null)} className="text-xs text-primary font-semibold mb-3 flex items-center gap-1"><ArrowLeft size={14} /> Back to all months</button>
+              <div className="rounded-2xl bg-card p-5 shadow-card space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Calendar size={18} className="text-primary" />
+                    <p className="text-base font-bold">{selectedMonth.name}</p>
                   </div>
-                  <ChevronRight size={16} className="text-muted-foreground shrink-0 mt-1" />
+                  <span className={`flex items-center gap-0.5 text-xs font-semibold ${selectedMonth.change < 0 ? "text-success" : "text-destructive"}`}>
+                    {selectedMonth.change < 0 ? <TrendingDown size={14} /> : <TrendingUp size={14} />}
+                    {Math.abs(selectedMonth.change)}% vs prev
+                  </span>
                 </div>
-                <div className="mt-2 bg-muted rounded-lg px-3 py-2 flex items-start gap-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl bg-gradient-to-br from-primary to-primary-dark p-3 text-primary-foreground">
+                    <p className="text-[9px] opacity-80 uppercase">Total Bill</p>
+                    <p className="text-xl font-bold mt-0.5">₱{selectedMonth.bill.toLocaleString()}</p>
+                  </div>
+                  <div className="rounded-xl bg-muted p-3">
+                    <p className="text-[9px] text-muted-foreground uppercase">kWh Used</p>
+                    <p className="text-xl font-bold mt-0.5">{selectedMonth.kwh}</p>
+                  </div>
+                </div>
+                <div className="bg-muted rounded-xl px-4 py-3 flex items-start gap-2">
                   <img src={ideaImg} alt="" className="h-4 w-4 object-contain shrink-0 mt-0.5" />
-                  <p className="text-[10px] text-muted-foreground leading-relaxed">{m.insight}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{selectedMonth.insight}</p>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl bg-card shadow-card overflow-hidden">
+              <table className="w-full text-[11px]">
+                <thead>
+                  <tr className="border-b border-border bg-muted/50">
+                    <th className="text-left font-semibold text-muted-foreground py-2.5 px-3">Month</th>
+                    <th className="text-right font-semibold text-muted-foreground py-2.5 px-2">Bill</th>
+                    <th className="text-right font-semibold text-muted-foreground py-2.5 px-2">kWh</th>
+                    <th className="text-right font-semibold text-muted-foreground py-2.5 px-3">Change</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {e.months.map((m, i) => (
+                    <tr key={i} onClick={() => setSelectedMonth(m)} className="border-b border-border last:border-0 hover:bg-muted/30 transition cursor-pointer">
+                      <td className="py-3 px-3 font-semibold">{m.name}</td>
+                      <td className="py-3 px-2 text-right font-semibold">₱{m.bill.toLocaleString()}</td>
+                      <td className="py-3 px-2 text-right text-muted-foreground">{m.kwh}</td>
+                      <td className="py-3 px-3 text-right">
+                        <span className={`flex items-center justify-end gap-0.5 text-xs font-semibold ${m.change < 0 ? "text-success" : "text-destructive"}`}>
+                          {m.change < 0 ? <TrendingDown size={12} /> : <TrendingUp size={12} />}
+                          {Math.abs(m.change)}%
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* ── AI comparison engine ── */}
@@ -222,14 +262,104 @@ function EnergyHistory() {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <Button variant="default" size="sm" className="py-3 text-xs">
+            <Button variant="default" size="sm" className="py-3 text-xs" onClick={() => setShowPdfPreview(true)}>
               <Download size={14} /> PDF Report
             </Button>
-            <Button variant="outline" size="sm" className="py-3 text-xs">
+            <Button variant="outline" size="sm" className="py-3 text-xs" onClick={() => setShowSharePreview(true)}>
               <Share2 size={14} /> Share Summary
             </Button>
           </div>
         </div>
+
+        {/* ===== PDF PREVIEW MODAL ===== */}
+        {showPdfPreview && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-float-up" onClick={() => setShowPdfPreview(false)}>
+            <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+              <div className="bg-gradient-to-r from-primary to-primary-dark p-5 text-white text-center">
+                <p className="text-xs font-semibold uppercase tracking-wider">Energy Report</p>
+                <p className="text-lg font-bold mt-1">AlitapWatt</p>
+                <p className="text-[10px] opacity-80">{e.userName}'s Household</p>
+              </div>
+              <div className="p-5 space-y-3 text-[11px] text-gray-700">
+                <div className="flex justify-between pb-2 border-b border-gray-200">
+                  <span>Estimated Monthly Bill</span>
+                  <span className="font-bold">₱{e.estimatedBill.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between pb-2 border-b border-gray-200">
+                  <span>Current Consumption</span>
+                  <span className="font-bold">{e.currentUsage} kWh</span>
+                </div>
+                <div className="flex justify-between pb-2 border-b border-gray-200">
+                  <span>Monthly Budget</span>
+                  <span className="font-bold">₱{e.budgetTotal.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between pb-2 border-b border-gray-200">
+                  <span>Total Savings</span>
+                  <span className="font-bold text-green-600">₱{e.totalSavingsYear.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between pb-2 border-b border-gray-200">
+                  <span>Energy Score</span>
+                  <span className="font-bold">{e.energyScore}/100</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Avg. Monthly Bill</span>
+                  <span className="font-bold">₱{e.avgBill.toLocaleString()}</span>
+                </div>
+              </div>
+              <div className="p-4 bg-gray-50 text-center">
+                <p className="text-[9px] text-gray-400">Generated by AlitapWatt · alitapwatt.app</p>
+                <Button size="sm" className="mt-3 w-full text-xs" onClick={() => { setShowPdfPreview(false); window.print(); }}>
+                  <Download size={14} /> Download PDF
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ===== SHARE PREVIEW MODAL ===== */}
+        {showSharePreview && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-float-up" onClick={() => setShowSharePreview(false)}>
+            <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+              <div className="relative bg-gradient-to-br from-primary via-primary-dark to-primary p-6 text-white text-center overflow-hidden">
+                <div className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
+                <img src={happyImg} alt="" className="h-12 w-12 object-contain mx-auto" />
+                <p className="text-lg font-bold mt-2">AlitapWatt</p>
+                <p className="text-[10px] opacity-80">Energy Summary · {new Date().toLocaleDateString()}</p>
+              </div>
+              <div className="p-5 space-y-3">
+                <div className="text-center">
+                  <p className="text-[10px] text-gray-500">Monthly Energy Bill</p>
+                  <p className="text-3xl font-bold text-gray-900">₱{e.estimatedBill.toLocaleString()}</p>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
+                  <div className="rounded-lg bg-orange-50 p-2">
+                    <p className="font-bold text-gray-900">{e.currentUsage}</p>
+                    <p className="text-gray-500">kWh</p>
+                  </div>
+                  <div className="rounded-lg bg-green-50 p-2">
+                    <p className="font-bold text-green-700">₱{e.savings.toLocaleString()}</p>
+                    <p className="text-gray-500">Saved</p>
+                  </div>
+                  <div className="rounded-lg bg-blue-50 p-2">
+                    <p className="font-bold text-blue-700">{e.energyScore}</p>
+                    <p className="text-gray-500">Score</p>
+                  </div>
+                </div>
+                <p className="text-center text-[10px] text-gray-400 pt-2 border-t border-gray-100">
+                  🇵🇭 Powered by AlitapWatt · Making Filipino homes energy-efficient
+                </p>
+              </div>
+              <div className="p-4 bg-gray-50 flex gap-2">
+                <Button size="sm" className="flex-1 text-xs" onClick={() => { setShowSharePreview(false); }}>
+                  <Share2 size={14} /> Share Now
+                </Button>
+                <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => setShowSharePreview(false)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AppShell>
   );

@@ -1,5 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { Home, ScanLine, Lightbulb, History, User } from "lucide-react";
+import mascot from "../../assets/happy.png";
 
 const items = [
   { to: "/home", label: "Home", icon: Home },
@@ -16,6 +17,7 @@ export function BottomNav() {
       <ul className="grid grid-cols-5">
         {items.map(({ to, label, icon: Icon }) => {
           const active = pathname === to;
+          const isAiHub = to === "/insights";
           return (
             <li key={to}>
               <Link
@@ -29,7 +31,11 @@ export function BottomNav() {
                       : "text-muted-foreground"
                   }`}
                 >
-                  <Icon size={18} />
+                  {isAiHub ? (
+                    <img src={mascot} alt="" className={`h-7 w-7 object-contain ${active ? "" : "opacity-50"}`} />
+                  ) : (
+                    <Icon size={18} />
+                  )}
                 </span>
                 <span className={active ? "text-primary font-semibold" : "text-muted-foreground"}>
                   {label}

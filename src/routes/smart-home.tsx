@@ -13,7 +13,7 @@ export const Route = createFileRoute("/smart-home")({
   head: () => ({ meta: [{ title: "Smart Home Energy — AlitapWatt" }] }),
 });
 
-const integrations = ["Smart Plugs", "IoT Sensors", "Smart Meters", "Meralco API", "Solar Panels"];
+const integrations = ["Smart Plugs", "IoT Sensors", "Smart Meters", "Utility API", "Solar Panels"];
 
 function SmartHome() {
   const { data } = useEnergyData();

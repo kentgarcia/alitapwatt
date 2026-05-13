@@ -6,8 +6,11 @@ import {
   Refrigerator, WashingMachine, Lightbulb, ArrowRight, ChevronRight,
   Leaf, Users, Target, Award, MessageCircle, X, Send,
   Clock, BarChart3, AlertTriangle, CheckCircle2,
-  Moon, Brain, Home
+  Moon, Home
 } from "lucide-react";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
+} from "recharts";
 import { useState, useEffect, useRef } from "react";
 import happyImg from "../../assets/happy.png";
 import ideaImg from "../../assets/idea.png";
@@ -109,7 +112,7 @@ function FloatingChat() {
         "best appliance to upgrade": "Your refrigerator is 8 years old — newer models use 40% less energy. Upgrading could save you ₱250/mo.",
         "stay under 3000 this month": "You've used ₱2,485 so far. Reduce AC by 2hrs/day and unplug idle devices to stay under ₱3,000.",
       };
-      const reply = Object.entries(replies).find(([k]) => text.toLowerCase().includes(k))?.[1] || "Great question! Based on your usage data, I recommend checking your AC usage — it's your biggest energy consumer. Want me to dive deeper into any specific appliance?";
+      const reply = Object.entries(replies).find(([k]) => text.toLowerCase().includes(k))?.[1] || "I can help with specific topics! Please try one of the suggested questions above: why your bill is high, how to lower AC usage, which appliance to upgrade, or how to stay under your monthly budget.";
       setMessages(prev => [...prev, { role: "ai", text: reply }]);
       setThinking(false);
     }, 1500);
@@ -118,25 +121,25 @@ function FloatingChat() {
   return (
     <>
       {open && (
-        <div className="fixed bottom-24 right-4 z-50 w-80 rounded-2xl bg-card shadow-2xl border border-primary/20 overflow-hidden animate-float-up">
+        <div className="fixed bottom-24 right-4 z-50 w-72 rounded-2xl bg-card shadow-2xl border border-primary/20 overflow-hidden animate-float-up">
           <div className="bg-gradient-to-r from-primary to-primary-dark p-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <img src={happyImg} alt="" className="h-6 w-6 object-contain" />
+              <img src={happyImg} alt="" className="h-5 w-5 object-contain" />
               <p className="text-xs font-semibold text-white">AlitapWatt AI</p>
             </div>
             <button onClick={() => setOpen(false)}><X size={16} className="text-white/70" /></button>
           </div>
-          <div className="h-64 overflow-y-auto p-3 space-y-2 bg-card">
+          <div className="h-56 overflow-y-auto p-3 space-y-2 bg-card">
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[80%] rounded-xl px-3 py-2 text-xs ${
+                <div className={`max-w-[85%] rounded-xl px-3 py-2 text-xs ${
                   m.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
                 }`}>{m.text}</div>
               </div>
             ))}
             {thinking && (
               <div className="flex justify-start">
-                <div className="max-w-[80%] rounded-xl px-3 py-2 bg-muted flex items-center gap-1">
+                <div className="max-w-[85%] rounded-xl px-3 py-2 bg-muted flex items-center gap-1">
                   <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0s" }} />
                   <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0.2s" }} />
                   <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0.4s" }} />
@@ -158,8 +161,8 @@ function FloatingChat() {
           </div>
         </div>
       )}
-      <button onClick={() => setOpen(!open)} className="fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-dark shadow-glow animate-bounce hover:scale-105 transition" style={{ animationDuration: "3s" }}>
-        {open ? <X size={22} className="text-white" /> : <MessageCircle size={22} className="text-white" />}
+      <button onClick={() => setOpen(!open)} className="fixed bottom-24 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-dark shadow-glow hover:scale-105 transition">
+        {open ? <X size={20} className="text-white" /> : <MessageCircle size={20} className="text-white" />}
       </button>
     </>
   );
@@ -197,9 +200,6 @@ function AIEnergyHub() {
           <div className="flex items-start gap-4">
             <div className="relative shrink-0">
               <img src={happyImg} alt="" className="h-20 w-20 object-contain drop-shadow-xl" />
-              <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-success shadow-glow animate-pulse">
-                <Brain size={10} className="text-white" />
-              </span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-white text-sm font-semibold">{greeting}, Kent <span className="inline-block animate-wave">👋</span></p>
@@ -207,12 +207,6 @@ function AIEnergyHub() {
                 <p className="text-xs text-white/90 leading-relaxed">
                   Your household energy usage increased by <span className="font-bold text-white">12%</span> this week, mainly due to longer air conditioner usage during hotter evenings.
                 </p>
-              </div>
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                <StatusBadge label="Energy Score: 72/100" type="stable" />
-                <StatusBadge label="Bill: On Track" type="excellent" />
-                <StatusBadge label="Carbon: Moderate" type="warning" />
-                <StatusBadge label="Budget: ₱515 Left" type="excellent" />
               </div>
             </div>
           </div>
@@ -271,14 +265,18 @@ function AIEnergyHub() {
           <div className="rounded-2xl bg-card p-4 shadow-card">
             {activeChart === "hourly" && (
               <div className="space-y-2">
-                <div className="flex items-end gap-1 h-24">
-                  {[18, 22, 35, 48, 62, 75, 68, 55, 40, 30, 20, 15].map((v, i) => (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
-                      <div className="w-full rounded-t" style={{ height: `${v}%`, backgroundColor: v > 60 ? "#ef4444" : v > 40 ? "#eab308" : "#F97316", opacity: 0.6 + (v / 100) * 0.4 }} />
-                      {i % 3 === 0 && <span className="text-[6px] text-muted-foreground">{["6A","8A","10A","12P","2P","4P","6P","8P","10P","12A","2A","4A"][i]}</span>}
-                    </div>
-                  ))}
-                </div>
+          <ResponsiveContainer width="100%" height={120}>
+            <BarChart data={[18, 22, 35, 48, 62, 75, 68, 55, 40, 30, 20, 15].map((v, i) => ({ hour: ["6A","8A","10A","12P","2P","4P","6P","8P","10P","12A","2A","4A"][i], kw: v }))} margin={{ top: 5, right: 5, bottom: 0, left: -15 }}>
+              <XAxis dataKey="hour" tick={{ fontSize: 8 }} axisLine={false} tickLine={false} interval={2} />
+              <YAxis hide />
+              <Tooltip contentStyle={{ fontSize: 10, borderRadius: 8 }} formatter={(v: number) => [`${v.toFixed(1)} kW`, "Load"]} />
+              <Bar dataKey="kw" radius={[4, 4, 0, 0]}>
+                {[18, 22, 35, 48, 62, 75, 68, 55, 40, 30, 20, 15].map((v, i) => (
+                  <Cell key={i} fill={v > 60 ? "#ef4444" : v > 40 ? "#eab308" : "#F97316"} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
                 <p className="text-[10px] text-muted-foreground italic flex items-center gap-2">
                   <img src={thinkingImg} alt="" className="h-4 w-4 object-contain" />
                   Your peak electricity usage occurs between 7PM and 10PM when multiple appliances operate simultaneously.
@@ -286,34 +284,47 @@ function AIEnergyHub() {
               </div>
             )}
             {activeChart === "appliance" && (
-              <div className="space-y-2.5">
-                {[
-                  { name: "Air Conditioner", pct: 38, color: "#F97316" },
-                  { name: "Refrigerator", pct: 22, color: "#06b6d4" },
-                  { name: "TV & Devices", pct: 15, color: "#8b5cf6" },
-                  { name: "Washing Machine", pct: 12, color: "#10b981" },
-                  { name: "Lights & Others", pct: 13, color: "#eab308" },
-                ].map((a, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <span className="w-20 text-[10px] text-muted-foreground truncate">{a.name}</span>
-                    <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                      <div className="h-full rounded-full transition-all" style={{ width: `${a.pct}%`, backgroundColor: a.color }} />
-                    </div>
-                    <span className="text-[10px] font-semibold w-8 text-right">{a.pct}%</span>
-                  </div>
-                ))}
+              <div className="space-y-1">
+                <ResponsiveContainer width="100%" height={140}>
+                  <BarChart data={[
+                    { name: "Air Conditioner", pct: 38 },
+                    { name: "Refrigerator", pct: 22 },
+                    { name: "TV & Devices", pct: 15 },
+                    { name: "Washing Machine", pct: 12 },
+                    { name: "Lights & Others", pct: 13 },
+                  ]} layout="vertical" margin={{ top: 0, right: 5, bottom: 0, left: 5 }}>
+                    <XAxis type="number" hide />
+                    <YAxis type="category" dataKey="name" tick={{ fontSize: 9 }} width={95} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ fontSize: 10, borderRadius: 8 }} formatter={(v: number) => [`${v}%`, "Usage"]} />
+                    <Bar dataKey="pct" radius={[0, 4, 4, 0]}>
+                      {[
+                        { name: "Air Conditioner", pct: 38, color: "#F97316" },
+                        { name: "Refrigerator", pct: 22, color: "#06b6d4" },
+                        { name: "TV & Devices", pct: 15, color: "#8b5cf6" },
+                        { name: "Washing Machine", pct: 12, color: "#10b981" },
+                        { name: "Lights & Others", pct: 13, color: "#eab308" },
+                      ].map((a, i) => (
+                        <Cell key={i} fill={a.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             )}
             {activeChart === "daily" && (
               <div className="space-y-1">
-                <div className="flex items-end gap-1 h-24">
-                  {[28, 35, 22, 40, 32, 48, 55].map((v, i) => (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
-                      <div className="w-full rounded-t bg-gradient-to-t from-primary to-primary-soft" style={{ height: `${v}%` }} />
-                      <span className="text-[7px] text-muted-foreground">{["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][i]}</span>
-                    </div>
-                  ))}
-                </div>
+                <ResponsiveContainer width="100%" height={120}>
+                  <BarChart data={[28, 35, 22, 40, 32, 48, 55].map((v, i) => ({ day: ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][i], kwh: v }))} margin={{ top: 5, right: 5, bottom: 0, left: -15 }}>
+                    <XAxis dataKey="day" tick={{ fontSize: 8 }} axisLine={false} tickLine={false} />
+                    <YAxis hide />
+                    <Tooltip contentStyle={{ fontSize: 10, borderRadius: 8 }} formatter={(v: number) => [`${v.toFixed(1)} kWh`, "Usage"]} />
+                    <Bar dataKey="kwh" radius={[4, 4, 0, 0]} fill="#F97316">
+                      {[28, 35, 22, 40, 32, 48, 55].map((v, i) => (
+                        <Cell key={i} fill={i >= 5 ? "#F97316" : "#FDBA74"} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
                 <p className="text-[10px] text-muted-foreground italic">Weekend usage tends to be higher — try scheduling heavy appliances on weekdays.</p>
               </div>
             )}
@@ -337,57 +348,76 @@ function AIEnergyHub() {
         {/* ── smart appliance intelligence ── */}
         <div>
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Smart Appliance Intelligence</h3>
-          <div className="space-y-2">
-            {appliances.map((a, i) => {
-              const Icon = a.icon;
-              const rateColor = a.rating === "Excellent" ? "text-emerald-400 bg-emerald-500/10" : a.rating === "Good" ? "text-blue-400 bg-blue-500/10" : a.rating === "Moderate" ? "text-amber-400 bg-amber-500/10" : "text-red-400 bg-red-500/10";
-              return (
-                <div key={i} className="rounded-2xl bg-card p-3.5 shadow-card border border-primary/5">
-                  <div className="flex items-center gap-3">
-                    <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 ${a.iconColor}`}>
-                      <Icon size={18} />
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-semibold">{a.name}</p>
-                        <span className={`rounded-full px-2 py-0.5 text-[9px] font-semibold ${rateColor}`}>{a.rating}</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-0.5">
-                        <span>{a.usage}</span>
-                        <span>{a.cost}/mo</span>
-                      </div>
-                      <p className="text-[10px] text-primary mt-1 flex items-center gap-1">
-                        <img src={teachImg} alt="" className="h-3.5 w-3.5 object-contain" />
-                        {a.suggestion}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="rounded-2xl bg-card shadow-card overflow-hidden">
+            <table className="w-full text-[11px]">
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="text-left font-semibold text-muted-foreground py-2.5 px-3">Appliance</th>
+                  <th className="text-right font-semibold text-muted-foreground py-2.5 px-2">Usage</th>
+                  <th className="text-right font-semibold text-muted-foreground py-2.5 px-2">Cost</th>
+                  <th className="text-right font-semibold text-muted-foreground py-2.5 px-3">Rating</th>
+                </tr>
+              </thead>
+              <tbody>
+                {appliances.map((a, i) => {
+                  const Icon = a.icon;
+                  const rateColor = a.rating === "Excellent" ? "text-emerald-600 bg-emerald-50" : a.rating === "Good" ? "text-blue-600 bg-blue-50" : a.rating === "Moderate" ? "text-amber-600 bg-amber-50" : "text-red-600 bg-red-50";
+                  return (
+                    <tr key={i} className="border-b border-border last:border-0 hover:bg-muted/30 transition">
+                      <td className="py-3 px-3">
+                        <div className="flex items-center gap-2.5">
+                          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 ${a.iconColor}`}>
+                            <Icon size={15} />
+                          </span>
+                          <span className="font-semibold text-foreground">{a.name}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-2 text-right font-semibold">{a.usage}</td>
+                      <td className="py-3 px-2 text-right font-semibold">{a.cost}</td>
+                      <td className="py-3 px-3 text-right">
+                        <span className={`inline-block rounded-full px-2.5 py-0.5 text-[9px] font-semibold ${rateColor}`}>{a.rating}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
 
         {/* ── ai savings recommendations ── */}
         <div>
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Smart Tipid Recommendations</h3>
-          <div className="space-y-2">
-            {recommendations.map((r, i) => (
-              <div key={i} className="rounded-2xl bg-card p-4 shadow-card border border-primary/5 hover:border-primary/20 transition">
-                <div className="flex items-start gap-3">
-                  <img src={ideaImg} alt="" className="h-9 w-9 object-contain shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold">{r.title}</p>
-                    <div className="flex items-center gap-3 mt-1.5 text-[10px]">
-                      <span className="font-bold text-success">Save {r.save}</span>
-                      <span className="text-muted-foreground">Difficulty: {r.diff}</span>
-                      <span className="text-muted-foreground">Impact: {r.impact}</span>
-                    </div>
-                  </div>
-                  <ArrowRight size={14} className="text-muted-foreground shrink-0 mt-1" />
-                </div>
-              </div>
-            ))}
+          <div className="rounded-2xl bg-card shadow-card overflow-hidden">
+            <table className="w-full text-[11px]">
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="text-left font-semibold text-muted-foreground py-2.5 px-3">Recommendation</th>
+                  <th className="text-right font-semibold text-muted-foreground py-2.5 px-2">Savings</th>
+                  <th className="text-right font-semibold text-muted-foreground py-2.5 px-2">Difficulty</th>
+                  <th className="text-right font-semibold text-muted-foreground py-2.5 px-3">Impact</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recommendations.map((r, i) => (
+                  <tr key={i} className="border-b border-border last:border-0 hover:bg-muted/30 transition">
+                    <td className="py-3 px-3">
+                      <div className="flex items-center gap-2.5">
+                        <img src={ideaImg} alt="" className="h-6 w-6 object-contain shrink-0" />
+                        <span className="font-semibold text-foreground">{r.title}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-2 text-right font-semibold text-success">{r.save}</td>
+                    <td className="py-3 px-2 text-right text-muted-foreground">{r.diff}</td>
+                    <td className="py-3 px-3 text-right">
+                      <span className={`inline-block rounded-full px-2.5 py-0.5 text-[9px] font-semibold ${
+                        r.impact === "High" ? "text-emerald-600 bg-emerald-50" : r.impact === "Medium" ? "text-amber-600 bg-amber-50" : "text-blue-600 bg-blue-50"
+                      }`}>{r.impact}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
